@@ -3,8 +3,8 @@ Para calibrar el sensor de Arduino y obtener una ecuación que ajuste los datos 
 Para calcular la pendiente (m) y la intersección en el eje (b) se utiliza la fórmula:
 
 $
-m = \frac{{\sum (x_i - \bar{x})}}{{\sum (x_i - \bar{x})^2}} \quad [1]
-$
+m = \frac{{\sum (x_i - \bar{x})}}{{\sum (x_i - \bar{x})^2}} \quad $[1]
+
 
 $b = \bar{y} - m\bar{x} \quad [2]$
 
