@@ -9,10 +9,10 @@ $b = \bar{y} - m\bar{x} \quad [2]$
 
 
 Donde:
-$x_i$: Valores del sensor
-$y_i$: Valores del patrón
-$\bar{x}$: Promedio de los valores del sensor.
-$\bar{y}$: Promedio de los valores del patrón.
+$x_i$: Valores del sensor \\
+$y_i$: Valores del patrón \\
+$\bar{x}$: Promedio de los valores del sensor. \\
+$\bar{y}$: Promedio de los valores del patrón. \\
 
 La ecuación [3] para la calibración será de la forma:
 
