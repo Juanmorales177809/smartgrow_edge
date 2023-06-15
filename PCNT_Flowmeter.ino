@@ -8,6 +8,7 @@ void handleInterrupt()
 
 void setup() 
   {
+  Serial.begin(115200);
   pinMode(pinInterrupt, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(pinInterrupt), handleInterrupt, RISING);
   }
