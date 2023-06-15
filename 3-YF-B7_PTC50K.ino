@@ -1,19 +1,13 @@
 #include <WiFi.h>
-#include <aREST.h>
+#include <WiFiMulti.h>
+#include <HTTPClient.h>
 #include <Adafruit_SleepyDog.h>
 
-// Crear API Rest
-aREST rest = aREST();
+WiFiMulti wifiMulti;
 
 // Definir red Wifi a conectar el dispositivo
-const char* ssid = "Convergentes";
-const char* password = "RedesConvergentes*#";
-
-// Definir puertos
-#define LISTEN_PORT 80
-
-// Crear Instancia de Servidor
-WiFiServer server(LISTEN_PORT);
+const char* ssid = "smartgrow";
+const char* password = "2205631700";
 
 // Definicion de Variables
 float flujo1, flujo2, flujo3;
@@ -31,10 +25,12 @@ long previousMillis = 0;
 int interval = 1000;
 boolean ledState = LOW;
 float calibrationFactor1 = 4.5;  // Factor de calibración para sensor de flujo 1
-float calibrationFactor2 = 4.2;  // Factor de calibración para sensor de flujo 2
-float calibrationFactor3 = 4.8;  // Factor de calibración para sensor de flujo 3
+float calibrationFactor2 = 4.5;  // Factor de calibración para sensor de flujo 2
+float calibrationFactor3 = 4.5;  // Factor de calibración para sensor de flujo 3
 volatile byte pulseCount1, pulseCount2, pulseCount3;
-byte pulse1Sec1, pulse1Sec2, pulse1Sec3;
+byte pulse1Sec1 = 0;
+byte pulse1Sec2 = 0;
+byte pulse1Sec3 = 0;
 float flowRate1, flowRate2, flowRate3;
 unsigned int flowMilliLitres1, flowMilliLitres2, flowMilliLitres3;
 unsigned long totalMilliLitres1, totalMilliLitres2, totalMilliLitres3;
