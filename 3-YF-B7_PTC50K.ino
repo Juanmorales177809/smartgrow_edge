@@ -17,8 +17,8 @@ float litro1, litro2, litro3;
 // Sensor config
 #define LED_BUILTIN 2
 #define SENSOR1 27
-#define SENSOR2 26
-#define SENSOR3 25
+#define SENSOR2 12
+#define SENSOR3 13
 
 long currentMillis = 0;
 long previousMillis = 0;
@@ -35,10 +35,13 @@ float flowRate1, flowRate2, flowRate3;
 unsigned int flowMilliLitres1, flowMilliLitres2, flowMilliLitres3;
 unsigned long totalMilliLitres1, totalMilliLitres2, totalMilliLitres3;
 
-int Vo;
-float R1 = 51350;
-float logR2, R2, TEMPERATURA;
+int Vo1,Vo2,Vo3;
+float R11 = 51350;
+float R12 = 51350;
+float R13 = 51350;
+float logR21, R21, TEMPERATURA1,logR22, R22, TEMPERATURA2,logR23, R23, TEMPERATURA3;
 float c1 = 2.099609707e-03, c2 = 0.5081190862e-04, c3 = 5.562986194e-07;
+float m = 1.022225554341915, b = 4.054505841335171;
 
 void IRAM_ATTR pulseCounter1() {
   pulseCount1++;
@@ -79,36 +82,16 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(SENSOR2), pulseCounter2, FALLING);
   attachInterrupt(digitalPinToInterrupt(SENSOR3), pulseCounter3, FALLING);
 
-  // Init Variables API
-  rest.variable("Flujo1", &flujo1);
-  rest.variable("Flujo2", &flujo2);
-  rest.variable("Flujo3", &flujo3);
-  rest.variable("TemperaturaAgua1", &tempAgua1);
-  rest.variable("TemperaturaAgua2", &tempAgua2);
-  rest.variable("TemperaturaAgua3", &tempAgua3);
-  rest.variable("Litros1", &litro1);
-  rest.variable("Litros2", &litro2);
-  rest.variable("Litros3", &litro3);
-
-  // Name ID
-  rest.set_id("2");
-  rest.set_name("Flujo");
-
-  // Connect to WiFi
+//Connect to WiFi
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  wifiMulti.addAP(ssid, password);
+  Serial.println("Conectando a Wifi");
+  while(wifiMulti.run() != WL_CONNECTED){
+    Serial.println(".");
   }
-  Serial.println("");
-  Serial.println("WiFi connected!");
-
-  // Start Server
-  server.begin();
-  Serial.println("Server started!");
-
-  // IP
+  Serial.println();
+  Serial.println("Wifi Conectado");
+  Serial.println("Direccion IP: ");
   Serial.println(WiFi.localIP());
 
   Watchdog.enable(30000);
@@ -116,7 +99,11 @@ void setup() {
 
 void loop() {
   Watchdog.reset();
-
+  HTTPClient http;
+  Serial.println("[HTTP] Iniciando ... ");
+  http.begin("http://172.1.1.19:8000/sensor_de_flujo");
+  http.addHeader("Content-Type", "application/json");
+  Serial.println("[HTTP] POST...");
   // Wait 1s
   currentMillis = millis();
   if (currentMillis - previousMillis > interval) {
@@ -149,19 +136,32 @@ void loop() {
     litro3 = (totalMilliLitres3 / 1000);
   }
 
-  Vo = analogRead(34);      // lectura de A0
-  R2 = R1 * (4095.0 / (float)Vo - 1.0); // conversion de tension a resistencia
-  logR2 = log(R2);      // logaritmo de R2 necesario para ecuacion
-  TEMPERATURA = (1.0 / (c1 + c2 * logR2 + c3 * logR2 * logR2 * logR2)); // ecuacion S-H
-  TEMPERATURA = TEMPERATURA - 273.15;
-  tempAgua1 = TEMPERATURA;
-  
-  // Aquí puedes añadir la lectura de los otros sensores de temperatura
+  Vo1 = analogRead(34);      // lectura de A0
+  Vo2 = analogRead(25);
+  Vo3 = analogRead(26);
+  R21 = R11 * (4095.0 / (float)Vo1 - 1.0); // conversion de tension a resistencia
+  logR21 = log(R21);      // logaritmo de R2 necesario para ecuacion
+  TEMPERATURA1 = (1.0 / (c1 + c2 * logR21 + c3 * logR21 * logR21 * logR21)); // ecuacion S-H
+  R22 = R12 * (4095.0 / (float)Vo2 - 1.0);
+  logR22 = log(R22);
+  TEMPERATURA2 = (1.0 / (c1 + c2 * logR22 + c3 * logR22 * logR22 * logR22));
+  R23 = R13 * (4095.0 / (float)Vo3 - 1.0);
+  logR23 = log(R23);
+  TEMPERATURA3 = (1.0 / (c1 + c2 * logR23 + c3 * logR23 * logR23 * logR23));
+  TEMPERATURA1 = TEMPERATURA1 - 273.15;
+  tempAgua1 = m*TEMPERATURA1+b;
+  TEMPERATURA2 = TEMPERATURA2 - 273.15;
+  tempAgua2 = m*TEMPERATURA2+b;
+  TEMPERATURA3 = TEMPERATURA3 - 273.15;
+  tempAgua3 = m*TEMPERATURA3+b;
 
-  // REST Calls
-  WiFiClient client = server.available();
-  if (!client) {
-    return;
-  }
-  rest.handle(client);
+  String json = "{\"flujo_1\":" + String(flujo1) + ",\"litros_1\":" + String(litros1) + ",\"temperatura_agua1\":" + String(tempAgua1) + ",\"flujo_2\":" + String(flujo2) + ",\"litros_2\":" + String(litros2) + ",\"temperatura_agua2\":" + String(tempAgua2) + ",\"flujo_3\":" + String(flujo3) + ",\"litros_3\":" + String(litros3) + ",\"temperatura_agua3\":" + String(tempAgua3) +"}";
+  Serial.println(json);
+  int httpCode = http.POST(json);
+  String payload = http.getString();
+  Serial.println(httpCode);
+  Serial.println(payload);
+  http.end();
+  delay(1000); 
+
 }
