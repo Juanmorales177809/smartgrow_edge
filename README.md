@@ -1,2 +1,2 @@
 # smartgrow_edge
-![arquitectura_iot drawio](https://user-images.githubusercontent.com/49843087/233516186-eec1762b-7ec2-45c3-9776-19073e62fa81.png)
+![YF-B7_PTC50K](https://github.com/Juanmorales177809/smartgrow_edge/assets/125296808/02835278-4926-4809-bec7-affb237265d0)
