@@ -16,9 +16,9 @@ float litro1, litro2, litro3;
 
 // Sensor config
 #define LED_BUILTIN 2
-#define SENSOR1 27
-#define SENSOR2 12
-#define SENSOR3 13
+#define SENSOR1 33
+#define SENSOR2 27
+#define SENSOR3 12
 
 long currentMillis = 0;
 long previousMillis = 0;
@@ -136,7 +136,7 @@ void loop() {
     litro3 = (totalMilliLitres3 / 1000);
   }
 
-  Vo1 = analogRead(34);      // lectura de A0
+  Vo1 = analogRead(34);     // lectura de A0
   Vo2 = analogRead(25);
   Vo3 = analogRead(26);
   R21 = R11 * (4095.0 / (float)Vo1 - 1.0); // conversion de tension a resistencia
