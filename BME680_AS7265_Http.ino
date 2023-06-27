@@ -152,7 +152,7 @@ void loop()
   PressureF= String(pressure1)+"."+String(pressure2);
   GasF= String(gas1)+"."+String(gas2);
 
-  String json = "{\"temperatura\":" + TempF + ",\"humedad\":" + HumidityF + ",\"presion\":" + PressureF + ",\"altitud\":" + String(alt) + ",\"co2\":" + GasF + ",\"410 nm\":" + String(A) + ",\"435 nm\":" + String(B) + ",\"460 nm\":" + String(C) + ",\"480 nm\":" + String(D) + ",\"510 nm\":" + String(E) + ",\"535 nm\":" + String(F) + ",\"560 nm\":" + String(G) + ",\"585 nm\":" + String(H) + ",\"610 nm\":" + String(R) + ",\"645 nm\":" + String(I) + ",\"680 nm\":" + String(S) + ",\"705 nm\":" + String(J) + ",\"730 nm\":" + String(T) + ",\"760 nm\":" + String(U) + ",\"810 nm\":" + String(V) + ",\"860 nm\":" + String(W) + ",\"900 nm\":" + String(K) + ",\"940 nm\":" + String(L) + ",\"Sensor\":" + "SCD40" +"}";
+  String json = "{\"temperatura\":" + TempF + ",\"humedad\":" + HumidityF + ",\"presion\":" + PressureF + ",\"altitud\":" + String(alt) + ",\"co2\":" + GasF + ",\"410 nm\":" + String(A) + ",\"435 nm\":" + String(B) + ",\"460 nm\":" + String(C) + ",\"480 nm\":" + String(D) + ",\"510 nm\":" + String(E) + ",\"535 nm\":" + String(F) + ",\"560 nm\":" + String(G) + ",\"585 nm\":" + String(H) + ",\"610 nm\":" + String(R) + ",\"645 nm\":" + String(I) + ",\"680 nm\":" + String(S) + ",\"705 nm\":" + String(J) + ",\"730 nm\":" + String(T) + ",\"760 nm\":" + String(U) + ",\"810 nm\":" + String(V) + ",\"860 nm\":" + String(W) + ",\"900 nm\":" + String(K) + ",\"940 nm\":" + String(L) + ",\"Sensor\":" + "BME680_AS7265" +"}";
   Serial.println(json);
   mqttClient.publish("smartgrow", json.c_str());
   delay(1000); 
