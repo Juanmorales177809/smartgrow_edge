@@ -47,7 +47,7 @@ void reconnect() {
     Serial.print("Intentando conectarse MQTT...");
     if (mqttClient.connect("arduinoClient")) {
       Serial.println("Conectado");
-      mqttClient.subscribe("Entrada/01");
+      mqttClient.subscribe("smartgrow");
     } else {
       Serial.print("Fallo, rc=");
       Serial.print(mqttClient.state());
@@ -98,8 +98,8 @@ void loop(){
   mq = mySensor.getCO2();    //MQ 135 Concentracion de Gases
   Humidity = mySensor.getHumidity(); // Humedad Relativa 0% - 100% (Punto de Rocio)
   temperature = mySensor.getTemperature();  // Temperatura 0°C - 120°C
-  String json = "{\"co2\":" + String(mq) + ",\"humedad\":" + String(Humidity) + ",\"temperatura\":" + String(temperature) + ",\"SCD40\":" +"}";
+  String json = "{\"co2\":" + String(mq) + ",\"humedad\":" + String(Humidity) + ",\"temperatura\":" + String(temperature) + ",\"Sensor\":" + "SCD40"+"}";
   Serial.println(json);
-  mqttClient.publish("Salida/01", json);
+  mqttClient.publish("smartgrow", json.c_str());
   delay(1000);
   }
