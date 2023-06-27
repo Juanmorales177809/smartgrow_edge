@@ -1,6 +1,5 @@
 #include <WiFi.h>
-#include <WiFiMulti.h>
-#include <HTTPClient.h>
+#include <PubSubClient.h>
 #include <Wire.h>
 #include "SparkFun_AS7265X.h" //Click here to get the library: http://librarymanager/All#SparkFun_AS7265X
 #include "Zanshin_BME680.h"
@@ -10,8 +9,8 @@ AS7265X sensor;
 
 BME680_Class BME680;
 
-WiFiMulti wifiMulti;
-
+WiFiClient esp32Client;
+PubSubClient mqttClient(esp32Client);
 
 //Definir red Wifi a conectar el dispositivo
 //const char* ssid = "smartgrow";
@@ -19,6 +18,44 @@ WiFiMulti wifiMulti;
 
 const char* ssid = "Convergentes";
 const char* password = "RedesConvergentes*#";
+
+char *server = "10.1.41.223";
+int port = 1883;
+int var = 0;
+char datos[40];
+String resultS = "";
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Mensaje recibido [");
+  Serial.print(topic);
+  Serial.print("] ");
+  char payload_string[length + 1];
+  int resultI;
+  memcpy(payload_string, payload, length);
+  payload_string[length] = '\0';
+  resultI = atoi(payload_string);
+  var = resultI;
+  resultS = "";
+  for (int i=0;i<length;i++) {
+    resultS= resultS + (char)payload[i];
+  }
+  Serial.println();
+}
+
+void reconnect() {
+  while (!mqttClient.connected()) {
+    Serial.print("Intentando conectarse MQTT...");
+    if (mqttClient.connect("arduinoClient")) {
+      Serial.println("Conectado");
+      mqttClient.subscribe("smartgrow");
+    } else {
+      Serial.print("Fallo, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" intentar de nuevo en 5 segundos");
+      delay(5000);
+    }
+  }
+}
 
 //Definicion de Variables
 float A, B, C, D, E, F, G, H, R, I, S, J, T, U, V, W, K, L;
@@ -53,15 +90,18 @@ void setup()
 
   //Connect to WiFi
   WiFi.mode(WIFI_STA);
-  wifiMulti.addAP(ssid, password);
+  WiFi.begin(ssid, password);
   Serial.println("Conectando a Wifi");
-  while(wifiMulti.run() != WL_CONNECTED){
+  while(WiFi.status() != WL_CONNECTED){
     Serial.println(".");
+    delay(500);
   }
   Serial.println();
   Serial.println("Wifi Conectado");
   Serial.println("Direccion IP: ");
   Serial.println(WiFi.localIP());
+  mqttClient.setServer(server, port);
+  mqttClient.setCallback(callback);  
 
   Watchdog.enable(30000);
 
@@ -71,11 +111,10 @@ void loop()
 {
   Watchdog.reset();
   
-  HTTPClient http;
-  Serial.println("[HTTP] Iniciando ... ");
-  http.begin("http://172.1.1.19:8000/sensor_de_flujo");
-  http.addHeader("Content-Type", "application/json");
-  Serial.println("[HTTP] POST...");
+  if (!mqttClient.connected()) {
+    reconnect();
+  }
+  mqttClient.loop();
   
   sensor.takeMeasurementsWithBulb();
   
@@ -112,16 +151,10 @@ void loop()
   HumidityF= String(humidity1)+"."+String(humidity2);
   PressureF= String(pressure1)+"."+String(pressure2);
   GasF= String(gas1)+"."+String(gas2);
-  
-  Sensor = TempF+"-"+HumidityF+"-"+PressureF+"-"+String(alt)+"-"+GasF ;
 
-  String json = "{\"temperatura\":" + TempF + ",\"humedad\":" + HumidityF + ",\"presion\":" + PressureF + ",\"altitud\":" + String(alt) + ",\"co2\":" + GasF + ",\"410 nm\":" + String(A) + ",\"435 nm\":" + String(B) + ",\"460 nm\":" + String(C) + ",\"480 nm\":" + String(D) + ",\"510 nm\":" + String(E) + ",\"535 nm\":" + String(F) + ",\"560 nm\":" + String(G) + ",\"585 nm\":" + String(H) + ",\"610 nm\":" + String(R) + ",\"645 nm\":" + String(I) + ",\"680 nm\":" + String(S) + ",\"705 nm\":" + String(J) + ",\"730 nm\":" + String(T) + ",\"760 nm\":" + String(U) + ",\"810 nm\":" + String(V) + ",\"860 nm\":" + String(W) + ",\"900 nm\":" + String(K) + ",\"940 nm\":" + String(L) +"}";
+  String json = "{\"temperatura\":" + TempF + ",\"humedad\":" + HumidityF + ",\"presion\":" + PressureF + ",\"altitud\":" + String(alt) + ",\"co2\":" + GasF + ",\"410 nm\":" + String(A) + ",\"435 nm\":" + String(B) + ",\"460 nm\":" + String(C) + ",\"480 nm\":" + String(D) + ",\"510 nm\":" + String(E) + ",\"535 nm\":" + String(F) + ",\"560 nm\":" + String(G) + ",\"585 nm\":" + String(H) + ",\"610 nm\":" + String(R) + ",\"645 nm\":" + String(I) + ",\"680 nm\":" + String(S) + ",\"705 nm\":" + String(J) + ",\"730 nm\":" + String(T) + ",\"760 nm\":" + String(U) + ",\"810 nm\":" + String(V) + ",\"860 nm\":" + String(W) + ",\"900 nm\":" + String(K) + ",\"940 nm\":" + String(L) + ",\"Sensor\":" + "SCD40" +"}";
   Serial.println(json);
-  int httpCode = http.POST(json);
-  String payload = http.getString();
-  Serial.println(httpCode);
-  Serial.println(payload);
-  http.end();
+  mqttClient.publish("smartgrow", json.c_str());
   delay(1000); 
 
 }
