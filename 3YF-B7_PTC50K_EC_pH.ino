@@ -1,13 +1,13 @@
 #include <WiFi.h>
-#include <WiFiMulti.h>
-#include <HTTPClient.h>
+#include <PubSubClient.h>
 #include <Adafruit_SleepyDog.h>
 #include "Control.h"
 #include "AtlasSerialSensor.h"
 #include "ph_grav.h"
 #include "SimpleKalmanFilter.h"
 
-WiFiMulti wifiMulti;
+WiFiClient esp32Client;
+PubSubClient mqttClient(esp32Client);
 
 // Definir red Wifi a conectar el dispositivo
 const char* ssid = "smartgrow";
@@ -102,6 +102,44 @@ SimpleKalmanFilter simpleKalmanEc(2, 2, 0.01);
 Gravity_pH phSensor = Gravity_pH(GRAV_PH_PIN);
 SimpleKalmanFilter simpleKalmanPh(2, 2, 0.01);
 
+char *server = "10.1.41.223";
+int port = 1883;
+int var = 0;
+char datos[40];
+String resultS = "";
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Mensaje recibido [");
+  Serial.print(topic);
+  Serial.print("] ");
+  char payload_string[length + 1];
+  int resultI;
+  memcpy(payload_string, payload, length);
+  payload_string[length] = '\0';
+  resultI = atoi(payload_string);
+  var = resultI;
+  resultS = "";
+  for (int i=0;i<length;i++) {
+    resultS= resultS + (char)payload[i];
+  }
+  Serial.println();
+}
+
+void reconnect() {
+  while (!mqttClient.connected()) {
+    Serial.print("Intentando conectarse MQTT...");
+    if (mqttClient.connect("arduinoClient")) {
+      Serial.println("Conectado");
+      mqttClient.subscribe("smartgrow");
+    } else {
+      Serial.print("Fallo, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" intentar de nuevo en 5 segundos");
+      delay(5000);
+    }
+  }
+}
+
 // Definir la preparación del código con SETUP
 void setup() {
   // Sensor config
@@ -140,26 +178,27 @@ void setup() {
   
 //Connect to WiFi
   WiFi.mode(WIFI_STA);
-  wifiMulti.addAP(ssid, password);
+  WiFi.begin(ssid, password);
   Serial.println("Conectando a Wifi");
-  while(wifiMulti.run() != WL_CONNECTED){
+  while(WiFi.status() != WL_CONNECTED){
     Serial.println(".");
+    delay(500);
   }
   Serial.println();
   Serial.println("Wifi Conectado");
   Serial.println("Direccion IP: ");
   Serial.println(WiFi.localIP());
-
+  mqttClient.setServer(server, port);
+  mqttClient.setCallback(callback);  
   Watchdog.enable(30000);
 }
 
 void loop() {
   Watchdog.reset();
-  HTTPClient http;
-  Serial.println("[HTTP] Iniciando ... ");
-  http.begin("http://172.1.1.19:8000/sensor_de_flujo");
-  http.addHeader("Content-Type", "application/json");
-  Serial.println("[HTTP] POST...");
+  if (!mqttClient.connected()) {
+    reconnect();
+  }
+  mqttClient.loop(); 
   // Wait 1s
   currentMillis = millis();
   if (currentMillis - previousMillis > interval) {
@@ -223,13 +262,9 @@ void loop() {
   float phSetpoint = phControl.getSetPoint();    
   phControl.calculateError();
 
-  String json = "{\"flujo_1\":" + String(flujo1) + ",\"litros_1\":" + String(litros1) + ",\"temperatura_agua1\":" + String(tempAgua1) + ",\"flujo_2\":" + String(flujo2) + ",\"litros_2\":" + String(litros2) + ",\"temperatura_agua2\":" + String(tempAgua2) + ",\"flujo_3\":" + String(flujo3) + ",\"litros_3\":" + String(litros3) + ",\"temperatura_agua3\":" + String(tempAgua3) + ",\"EC\":" + String(ecReading) + ",\"pH\":" + String(phReading) + ",\"EC_setpoint\":" + String(ecSetpoint) + ",\"pH_setpoint\":" + String(phSetpoint) +"}";
+  String json = "{\"flujo_1\":" + String(flujo1) + ",\"litros_1\":" + String(litros1) + ",\"temperatura_agua1\":" + String(tempAgua1) + ",\"flujo_2\":" + String(flujo2) + ",\"litros_2\":" + String(litros2) + ",\"temperatura_agua2\":" + String(tempAgua2) + ",\"flujo_3\":" + String(flujo3) + ",\"litros_3\":" + String(litros3) + ",\"temperatura_agua3\":" + String(tempAgua3) + ",\"EC\":" + String(ecReading) + ",\"pH\":" + String(phReading) + ",\"EC_setpoint\":" + String(ecSetpoint) + ",\"pH_setpoint\":" + String(phSetpoint) + ",\"Sensor\":" + "Flujo_pH_EC" +"}";
   Serial.println(json);
-  int httpCode = http.POST(json);
-  String payload = http.getString();
-  Serial.println(httpCode);
-  Serial.println(payload);
-  http.end();
+  mqttClient.publish("smartgrow", json.c_str());
   delay(1000); 
 
 }
