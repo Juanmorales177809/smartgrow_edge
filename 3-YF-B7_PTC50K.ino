@@ -11,7 +11,7 @@ const char* password = "2205631700";
 
 // Definicion de Variables
 float flujo1, flujo2, flujo3;
-float tempAgua1, tempAgua2, tempAgua3;
+float tempAgua1, tempAgua2;
 float litro1, litro2, litro3;
 
 // Sensor config
@@ -35,11 +35,10 @@ float flowRate1, flowRate2, flowRate3;
 unsigned int flowMilliLitres1, flowMilliLitres2, flowMilliLitres3;
 unsigned long totalMilliLitres1, totalMilliLitres2, totalMilliLitres3;
 
-int Vo1,Vo2,Vo3;
+int Vo1,Vo2;
 float R11 = 51350;
 float R12 = 51350;
-float R13 = 51350;
-float logR21, R21, TEMPERATURA1,logR22, R22, TEMPERATURA2,logR23, R23, TEMPERATURA3;
+float logR21, R21, TEMPERATURA1,logR22, R22, TEMPERATURA2;
 float c1 = 2.099609707e-03, c2 = 0.5081190862e-04, c3 = 5.562986194e-07;
 float m = 1.022225554341915, b = 4.054505841335171;
 
@@ -178,7 +177,7 @@ void loop() {
 
   Vo1 = analogRead(34);     // lectura de A0
   Vo2 = analogRead(25);
-  Vo3 = analogRead(26);
+  
   R21 = R11 * (4095.0 / (float)Vo1 - 1.0); // conversion de tension a resistencia
   logR21 = log(R21);      // logaritmo de R2 necesario para ecuacion
   TEMPERATURA1 = (1.0 / (c1 + c2 * logR21 + c3 * logR21 * logR21 * logR21)); // ecuacion S-H
@@ -187,15 +186,13 @@ void loop() {
   TEMPERATURA2 = (1.0 / (c1 + c2 * logR22 + c3 * logR22 * logR22 * logR22));
   R23 = R13 * (4095.0 / (float)Vo3 - 1.0);
   logR23 = log(R23);
-  TEMPERATURA3 = (1.0 / (c1 + c2 * logR23 + c3 * logR23 * logR23 * logR23));
-  TEMPERATURA1 = TEMPERATURA1 - 273.15;
+  
   tempAgua1 = m*TEMPERATURA1+b;
   TEMPERATURA2 = TEMPERATURA2 - 273.15;
   tempAgua2 = m*TEMPERATURA2+b;
-  TEMPERATURA3 = TEMPERATURA3 - 273.15;
-  tempAgua3 = m*TEMPERATURA3+b;
 
-  String json = "{\"flujo_1\":" + String(flujo1) + ",\"litros_1\":" + String(litros1) + ",\"temperatura_agua1\":" + String(tempAgua1) + ",\"flujo_2\":" + String(flujo2) + ",\"litros_2\":" + String(litros2) + ",\"temperatura_agua2\":" + String(tempAgua2) + ",\"flujo_3\":" + String(flujo3) + ",\"litros_3\":" + String(litros3) + ",\"temperatura_agua3\":" + String(tempAgua3) + ",\"Sensor\":" + "Flujo" +"}";
+
+  String json = "{\"litros_1\":" + String(litros1) + ",\"temperatura_agua1\":" + String(tempAgua1) + ",\"litros_2\":" + String(litros2) + ",\"temperatura_agua2\":" + String(tempAgua2) + ",\"litros_3\":" + String(litros3) + ",\"Sensor\":" + "hidroponico" +"}";
   Serial.println(json);
   mqttClient.publish("smartgrow", json.c_str());
   delay(1000); 
