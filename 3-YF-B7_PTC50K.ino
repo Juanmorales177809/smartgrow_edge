@@ -19,6 +19,8 @@ float litro1, litro2, litro3;
 #define SENSOR1 33
 #define SENSOR2 27
 #define SENSOR3 12
+#define MQTTON 32
+#define MQTTOFF 14
 
 long currentMillis = 0;
 long previousMillis = 0;
@@ -83,6 +85,8 @@ void reconnect() {
     if (mqttClient.connect("arduinoClient")) {
       Serial.println("Conectado");
       mqttClient.subscribe("smartgrow");
+      digitalWrite(MQTTOFF, LOW);
+      digitalWrite(MQTTON, HIGH);
     } else {
       Serial.print("Fallo, rc=");
       Serial.print(mqttClient.state());
@@ -97,9 +101,13 @@ void setup() {
   // Sensor config
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(MQTTON, OUTPUT);
+  pinMode(MQTTOFF, OUTPUT);
   pinMode(SENSOR1, INPUT_PULLUP);
   pinMode(SENSOR2, INPUT_PULLUP);
   pinMode(SENSOR3, INPUT_PULLUP);
+  digitalWrite(MQTTOFF, HIGH);
+  digitalWrite(MQTTON, LOW);
 
   pulseCount1 = 0;
   pulseCount2 = 0;
