@@ -91,6 +91,8 @@ void reconnect() {
       Serial.print("Fallo, rc=");
       Serial.print(mqttClient.state());
       Serial.println(" intentar de nuevo en 5 segundos");
+      digitalWrite(MQTTOFF, HIGH);
+      digitalWrite(MQTTON, LOW);
       delay(5000);
     }
   }
