@@ -197,12 +197,13 @@ void loop() {
   R23 = R13 * (4095.0 / (float)Vo3 - 1.0);
   logR23 = log(R23);
   
+  TEMPERATURA1 = TEMPERATURA1 - 273.15;
   tempAgua1 = m*TEMPERATURA1+b;
   TEMPERATURA2 = TEMPERATURA2 - 273.15;
   tempAgua2 = m*TEMPERATURA2+b;
 
 
-  String json = "{\"litros_1\":" + String(litros1) + ",\"temperatura_agua1\":" + String(tempAgua1) + ",\"litros_2\":" + String(litros2) + ",\"temperatura_agua2\":" + String(tempAgua2) + ",\"litros_3\":" + String(litros3) + ",\"Sensor\":" + "hidroponico" +"}";
+  String json = "{\"litros_1\":" + String(flujo1) + ",\"temperatura_agua1\":" + String(tempAgua1) + ",\"litros_2\":" + String(flujo2) + ",\"temperatura_agua2\":" + String(tempAgua2) + ",\"litros_3\":" + String(flujo3) + ",\"Sensor\":" + "hidroponico" +"}";
   Serial.println(json);
   mqttClient.publish("smartgrow", json.c_str());
   delay(1000); 
