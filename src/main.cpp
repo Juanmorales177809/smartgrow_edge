@@ -61,8 +61,10 @@ void loop()
     String jsonString;
     serializeJson(jsonDocument, jsonString);
 
+    // Enviar datos
     HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str());
-    MqttModule::enviarMensajeMQTT(mqttClient, jsonString);
+    String topic = "smartgrow/sensores/scd40";
+    MqttModule::enviarMensajeMQTT(mqttClient, jsonString, topic);
     delay(1000);
     delay(1000);
   }
