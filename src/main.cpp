@@ -4,92 +4,38 @@
 #include "SparkFun_SCD4x_Arduino_Library.h"
 #include <Adafruit_SleepyDog.h>
 #include <PubSubClient.h>
-#include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include "WiFiModule.h"
+#include "MqttModule.h"
+#include "HttpModule.h"
 
-SCD4x mySensor;
+// WiFi
+const char *ssid = ""; // Nombre de la red WiFi
+const char *password = ""; // Contraseña de la red WiFi
+
+// MQTT
+const char* server = "200.122.207.134";
+const int mqtt_port = 8310;
+const int http_port = 8311;
 
 WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
+SCD4x mySensor;
 
-const char *ssid = "WIFI-ITM";
-const char *password = "";
+float co2,temperature,humedad;
+const char* sensor_id = "650dc7d640e0be7842fc4239"; // ID del sensor
 
-char *server = "10.1.39.153";
-int port = 1883;
-int var = 0;
-char datos[40];
-String resultS = "";
-
-float mq, Humidity, temperature;
-
-const unsigned long interval = 600000; // Intervalo de 10 minutos en milisegundos
+const unsigned long interval = 60000; // Intervalo de tiempo en milisegundos (1 min)
 unsigned long previousMillis = 0;
-
-void accionesMQTT(String mensaje)
-{
-  if (mensaje == "recirculacion")
-  {
-    Serial.println("Recirculacion");
-  }
-  else if (mensaje == "hidroponico")
-  {
-    Serial.println("Recirculacion");
-  }
-}
-
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Mensaje recibido [");
-  Serial.print(topic);
-  Serial.print("] ");
-  char payload_string[length + 1];
-  int resultI;
-  memcpy(payload_string, payload, length);
-  payload_string[length] = '\0';
-  resultI = atoi(payload_string);
-  var = resultI;
-  resultS = "";
-  for (int i=0;i<length;i++) {
-    resultS= resultS + (char)payload[i];
-  }
-  Serial.println();
-  accionesMQTT(resultS);
-}
-
-void reconnect() {
-  while (!mqttClient.connected()) {
-    Serial.print("Intentando conectarse MQTT...");
-    if (mqttClient.connect("arduinoClient")) {
-      Serial.println("Conectado");
-      mqttClient.subscribe("smartgrow");
-    } else {
-      Serial.print("Fallo, rc=");
-      Serial.print(mqttClient.state());
-      Serial.println(" intentar de nuevo en 5 segundos");
-      delay(5000);
-    }
-  }
-}
 
 void setup()
 {
   Serial.begin(115200);
   Wire.begin();
   mySensor.begin();
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  Serial.println("Conectando a Wifi");
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.println(".");
-    delay(500);
-  }
-  Serial.println();
-  Serial.println("Wifi Conectado");
-  Serial.println("Direccion IP: ");
-  Serial.println(WiFi.localIP());
-  mqttClient.setServer(server, port);
-  mqttClient.setCallback(callback);  
+  WiFiModule::conectarWiFi(ssid, password);
+  mqttClient.setServer(server, mqtt_port);
+  mqttClient.setCallback(MqttModule::callback);
   Watchdog.enable(30000);
 }
 
@@ -97,7 +43,7 @@ void loop()
 {
   Watchdog.reset();
   if (!mqttClient.connected()) {
-    reconnect();
+    MqttModule::conectarMQTT(mqttClient, server, mqtt_port);
   }
   mqttClient.loop();
   unsigned long currentMillis = millis();
@@ -109,24 +55,15 @@ void loop()
     jsonDocument["co2"] = mySensor.getCO2();
     jsonDocument["temperatura"] = mySensor.getTemperature();
     jsonDocument["humedad"] = mySensor.getHumidity();
-    jsonDocument["tipo"] = "hidro";
+    jsonDocument["sensor"] = sensor_id;
 
     // Serializar el JSON en una cadena
     String jsonString;
     serializeJson(jsonDocument, jsonString);
 
-    HTTPClient http;
-    Serial.println("[HTTP] Iniciando ... ");
-    http.begin("http://10.1.39.153:3000/scd40");
-    http.addHeader("Content-Type", "application/json");
-    Serial.println("[HTTP] POST...");
-    Serial.println(jsonString);
-    int httpCode = http.POST(jsonString);
-    String payload = http.getString();
-    Serial.println(httpCode);
-    Serial.println(payload);
-    http.end();
-    mqttClient.publish("smartgrow", jsonString.c_str());
+    HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str());
+    MqttModule::enviarMensajeMQTT(mqttClient, jsonString);
+    delay(1000);
     delay(1000);
   }
 }
