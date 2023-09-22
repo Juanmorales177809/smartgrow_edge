@@ -66,6 +66,5 @@ void loop()
     String topic = "smartgrow/sensores/scd40";
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString, topic);
     delay(1000);
-    delay(1000);
   }
 }
