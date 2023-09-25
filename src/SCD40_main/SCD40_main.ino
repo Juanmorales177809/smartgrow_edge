@@ -5,13 +5,13 @@
 #include <Adafruit_SleepyDog.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
-#include "WiFiModule.h"
+#include "WifiModule.h"
 #include "MqttModule.h"
 #include "HttpModule.h"
 
 // WiFi
-const char *ssid = ""; // Nombre de la red WiFi
-const char *password = ""; // Contraseña de la red WiFi
+const char *ssid = "Familia Morales"; // Nombre de la red WiFi
+const char *password = "2205631700"; // Contraseña de la red WiFi
 
 // MQTT
 const char* server = "200.122.207.134";
@@ -65,6 +65,6 @@ void loop()
     HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str());
     String topic = "smartgrow/sensores/scd40";
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString, topic);
-    delay(1000);
+    delay(300000);
   }
 }
