@@ -37,7 +37,7 @@ Adafruit_BME680 bme; // I2C
 float temperature,humedad,altimetria;
 const char* sensor_id = "651203198748ed5dd33b6d2e"; // ID del sensor
 
-const unsigned long interval = 60000; // Intervalo de tiempo en milisegundos (1 min)
+const unsigned long interval = 300000; // Intervalo de tiempo en milisegundos (1 min)
 unsigned long previousMillis = 0;
 
 
@@ -87,7 +87,7 @@ void loop() {
 
     // Enviar datos
     HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str());
-    String topic = "smartgrow/sensores/scd40";
+    String topic = "smartgrow/sensores/bme680";
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString, topic);
     delay(1000);
   }
