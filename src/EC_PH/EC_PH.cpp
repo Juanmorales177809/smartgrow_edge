@@ -6,6 +6,10 @@
 #include "ph_grav.h"
 #include <ThingsBoard.h>
 #include <TBPubSubClient.h>
+#include <ArduinoJson.h>
+#include "WiFiModule.h"
+#include "MqttModule.h"
+#include "HttpModule.h"
 
 //----------------------------------------------------------------
 
@@ -30,18 +34,23 @@ const char* ssid = "Convergentes";
 const char* password = "RedesConvergentes*#";
 //==============================================================================
 WiFiClient espClient;
+PubSubClient mqttClient(espClient);
 ThingsBoard tb(espClient);
 int status = WL_IDLE_STATUS;
 //==============================================================================
-// char *server = "10.1.41.223";
-int port = 1883;
-int var = 0;
-char datos[40];
-String resultS = "";
+// MQTT
+const char* server = "200.122.207.134";
+const int mqtt_port = 8310;
+const int http_port = 8311;
+
 float     analog_ph;
 //==============================================================================
 String sensorstring = "";
 boolean sensor_string_complete = false;
+
+const char* sensor_id = "651b3c1a60ccd1c529a301d5"; // ID del sensor
+const unsigned long interval = 600000; // Intervalo de tiempo en milisegundos (10 min)
+unsigned long previousMillis = 0;
 
 void setup() {
   Wire.begin();                           //start the I2C
@@ -56,21 +65,37 @@ void setup() {
   
   sensorstring.reserve(30);  
   pH.begin();
-  //Connect to WiFi
-  // WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  Serial.println("Conectando a Wifi");
-  while(WiFi.status() != WL_CONNECTED){
-    Serial.println(".");
-    delay(500);
-  }
-  Serial.println();
-  Serial.println("Wifi Conectado");
-  Serial.println(WiFi.localIP());
+  WiFiModule::conectarWiFi(ssid, password);
+  mqttClient.setServer(server, mqtt_port);
+  mqttClient.setCallback(MqttModule::callback);  
 }
 
 void loop() {
   Seq.run();                              //run the sequncer to do the polling
+    if (!mqttClient.connected()) {
+    MqttModule::conectarMQTT(mqttClient, server, mqtt_port);
+  }
+  mqttClient.loop();
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= interval)
+  {
+    previousMillis = currentMillis;
+    StaticJsonDocument<200> jsonDocument; // Ajusta el tamaño según tus necesidades
+    jsonDocument["ph"] = ph;
+    jsonDocument["ec"] = EC;
+    jsonDocument["temperatura"] = 0.0;
+    jsonDocument["sensor"] = sensor_id;
+
+    // Serializar el JSON en una cadena
+    String jsonString;
+    serializeJson(jsonDocument, jsonString);
+
+    // Enviar datos
+    HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str());
+    String topic = "smartgrow/sensores/ph_ec";
+    MqttModule::enviarMensajeMQTT(mqttClient, jsonString, topic);
+    delay(1000);
+  }
 }
 
 void step1(){
@@ -83,8 +108,6 @@ void step1(){
   //------------------------------------------------------------------------------
   
 //================================================================================
-
-  
 }
 
 void step2(){
