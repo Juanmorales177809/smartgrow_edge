@@ -4,10 +4,10 @@
 #include <Ezo_i2c_util.h> //brings in common print statements
 #include <WiFi.h>
 #include "ph_grav.h"
-#include <ThingsBoard.h>
-#include <TBPubSubClient.h>
+//#include <ThingsBoard.h>
+#include <PubSubClient.h>
 #include <ArduinoJson.h>
-#include "WiFiModule.h"
+#include "WifiModule.h"
 #include "MqttModule.h"
 #include "HttpModule.h"
 
@@ -26,22 +26,25 @@ float ph;                        //float var used to hold the float value of the
 //----------------------------------------------------------------
 Sequencer2 Seq(&step1, 1000, &step2, 0);  //calls the steps in sequence with time in between them
 //==============================================================================
-#define THINGSBOARD_MQTT_SERVER       "thingsboard.cloud"
-#define THINGSBOARD_MQTT_ACESSTOKEN   "9Bvzv2qpM9J6sveLvkLd"
-#define THINGSBOARD_MQTT_PORT         1883
+//#define THINGSBOARD_MQTT_SERVER       "thingsboard.cloud"
+//#define THINGSBOARD_MQTT_ACESSTOKEN   "9Bvzv2qpM9J6sveLvkLd"
+//#define THINGSBOARD_MQTT_PORT         1883
 //==============================================================================
 const char* ssid = "Convergentes";
 const char* password = "RedesConvergentes*#";
 //==============================================================================
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
-ThingsBoard tb(espClient);
+//ThingsBoard tb(espClient);
 int status = WL_IDLE_STATUS;
 //==============================================================================
 // MQTT
-const char* server = "200.122.207.134";
-const int mqtt_port = 8310;
-const int http_port = 8311;
+// const char* server = "200.122.207.134";
+// const int mqtt_port = 8310;
+// const int http_port = 8311;
+const char* server = "172.16.20.94";
+const int mqtt_port = 1883;
+const int http_port = 3000;
 
 float     analog_ph;
 //==============================================================================
@@ -82,7 +85,7 @@ void loop() {
     previousMillis = currentMillis;
     StaticJsonDocument<200> jsonDocument; // Ajusta el tamaño según tus necesidades
     jsonDocument["ph"] = ph;
-    jsonDocument["ec"] = EC;
+    jsonDocument["ec"] = EC.get_last_received_reading();
     jsonDocument["temperatura"] = 0.0;
     jsonDocument["sensor"] = sensor_id;
 
