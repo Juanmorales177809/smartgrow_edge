@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <Ezo_i2c.h> //include the EZO I2C library from https://github.com/Atlas-Scientific/Ezo_I2c_lib
 #include <Wire.h>    //include arduinos i2c library
 #include <sequencer2.h> //imports a 2 function sequencer 
@@ -7,13 +8,10 @@
 //#include <ThingsBoard.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <HTTPClient.h>
 #include "WifiModule.h"
 #include "MqttModule.h"
-#include "HttpModule.h"
 
-//----------------------------------------------------------------
-
-//----------------------------------------------------------------
 Gravity_pH pH = Gravity_pH(32);
 Ezo_board EC = Ezo_board(100, "EC");      //create an EC circuit object who's address is 100 and name is "EC"
 //----------------------------------------------------------------
@@ -52,7 +50,7 @@ String sensorstring = "";
 boolean sensor_string_complete = false;
 
 const char* sensor_id = "651b3c1a60ccd1c529a301d5"; // ID del sensor
-const unsigned long interval = 600000; // Intervalo de tiempo en milisegundos (10 min)
+const unsigned long interval = 60000; // Intervalo de tiempo en milisegundos (10 min)
 unsigned long previousMillis = 0;
 
 void setup() {
@@ -75,9 +73,9 @@ void setup() {
 
 void loop() {
   Seq.run();                              //run the sequncer to do the polling
-    if (!mqttClient.connected()) {
-    MqttModule::conectarMQTT(mqttClient, server, mqtt_port);
-  }
+    //if (!mqttClient.connected()) {
+    //MqttModule::conectarMQTT(mqttClient, server, mqtt_port);
+  //}
   mqttClient.loop();
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval)
@@ -94,7 +92,18 @@ void loop() {
     serializeJson(jsonDocument, jsonString);
 
     // Enviar datos
-    HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str());
+    HTTPClient http;
+    Serial.println("[HTTP] Iniciando ... ");
+    http.begin("http://" + String(server) + ":" + String(http_port) + "/phec");
+    http.addHeader("Content-Type", "application/json");
+    Serial.println("[HTTP] POST...");
+    Serial.println(jsonString);
+    int httpCode = http.POST(jsonString);
+    String payload = http.getString();
+    Serial.println(httpCode);
+    Serial.println(payload);
+    http.end();
+    //HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str());
     String topic = "smartgrow/sensores/ph_ec";
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString, topic);
     delay(1000);
