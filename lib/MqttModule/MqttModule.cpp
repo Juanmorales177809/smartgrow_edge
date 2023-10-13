@@ -1,4 +1,5 @@
 #include "MqttModule.h"
+#include "ActuadoresModule.h"
 
 int var = 0;         // Definir var globalmente
 String resultS = ""; // Definir resultS globalmente
@@ -9,12 +10,16 @@ void MqttModule::conectarMQTT(PubSubClient &mqttClient, const char *server, int 
     {
         Serial.print("Intentando conectarse MQTT...");
         if (mqttClient.connect("arduinoClient"))
-        {
+        {   
+            digitalWrite(LED_NOT_CONNECTION, LOW);
+            digitalWrite(LED_CONNECTION, HIGH);
             Serial.println("Conectado");
-            mqttClient.subscribe("smartgrow");
+            mqttClient.subscribe("smartgrow/hidroponico/actuadores");
         }
         else
-        {
+        {   
+            digitalWrite(LED_CONNECTION, LOW);
+            digitalWrite(LED_NOT_CONNECTION, HIGH);
             Serial.print("Fallo, rc=");
             Serial.print(mqttClient.state());
             Serial.println(" intentar de nuevo en 5 segundos");
@@ -48,5 +53,5 @@ void MqttModule::callback(char *topic, byte *payload, unsigned int length)
         resultS = resultS + (char)payload[i];
     }
     Serial.println(resultS);
-    Serial.println();
+    ActuadoresModule::acciones(resultS);
 }

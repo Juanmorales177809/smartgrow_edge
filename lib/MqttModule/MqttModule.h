@@ -3,8 +3,8 @@
 
 #include <PubSubClient.h>
 
-extern int var;          // Declarar var como externa
-extern String resultS;   // Declarar resultS como externa
+extern const int LED_CONNECTION;
+extern const int LED_NOT_CONNECTION;
 
 class MqttModule {
 public:
