@@ -4,6 +4,9 @@
 int var = 0;         // Definir var globalmente
 String resultS = ""; // Definir resultS globalmente
 
+const int LED_CONNECTION = 19;
+const int LED_NOT_CONNECTION = 18;
+
 void MqttModule::conectarMQTT(PubSubClient &mqttClient, const char *server, int port)
 {
     while (!mqttClient.connected())
