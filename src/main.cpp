@@ -10,8 +10,8 @@
 #include "HttpModule.h"
 
 // WiFi
-const char *ssid = ""; // Nombre de la red WiFi
-const char *password = ""; // Contraseña de la red WiFi
+const char *ssid = "Familia Morales"; // Nombre de la red WiFi
+const char *password = "2205631700"; // Contraseña de la red WiFi
 
 // MQTT
 const char* server = "200.122.207.134";
@@ -22,11 +22,12 @@ WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
 SCD4x mySensor;
 
-float co2,temperature,humedad;
+float co2,temperature,humedad, VPD;
 const char* sensor_id = "650dc7d640e0be7842fc4239"; // ID del sensor
 
-const unsigned long interval = 60000; // Intervalo de tiempo en milisegundos (1 min)
+const unsigned long interval = 300000; // Intervalo de tiempo en milisegundos (5 min)
 unsigned long previousMillis = 0;
+
 
 void setup()
 {
@@ -38,25 +39,31 @@ void setup()
   mqttClient.setCallback(MqttModule::callback);
   Watchdog.enable(30000);
 }
-
+float calcularVPD(float temperatura, float humedad){
+  
+  VPD = 0.611 * exp((17.27 * temperatura) / (temperatura + 237.3)) - (humedad / 100) * 0.611 * exp((17.27 * temperatura) / (temperatura + 237.3));//Calculo de VPD  con la formula de Buck 1996 (https://es.wikipedia.org/wiki/Presi%C3%B3n_de_vapor_de_agua)
+  return VPD; 
+}
 void loop()
 {
   Watchdog.reset();
-  if (!mqttClient.connected()) {
-    MqttModule::conectarMQTT(mqttClient, server, mqtt_port);
-  }
+  // if (!mqttClient.connected()) {
+  //   MqttModule::conectarMQTT(mqttClient, server, mqtt_port);
+  // }
   mqttClient.loop();
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval)
   {
     previousMillis = currentMillis;
     mySensor.readMeasurement();
+    VPD = calcularVPD(mySensor.getTemperature(), mySensor.getHumidity());
     StaticJsonDocument<200> jsonDocument; // Ajusta el tamaño según tus necesidades
     jsonDocument["co2"] = mySensor.getCO2();
     jsonDocument["temperatura"] = mySensor.getTemperature();
     jsonDocument["humedad"] = mySensor.getHumidity();
+    jsonDocument["VPD"] = VPD;
     jsonDocument["sensor"] = sensor_id;
-
+    Serial.println("Datos: " + String(mySensor.getCO2()) + " " + String(mySensor.getTemperature()) + " " + String(mySensor.getHumidity()) + " " + String(VPD) + " " + String(sensor_id));
     // Serializar el JSON en una cadena
     String jsonString;
     serializeJson(jsonDocument, jsonString);
@@ -68,3 +75,4 @@ void loop()
     delay(1000);
   }
 }
+
