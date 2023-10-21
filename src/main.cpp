@@ -8,12 +8,12 @@
 #include "ActuadoresModule.h"
 
 // WiFi
-const char *ssid = ""; // Nombre de la red WiFi
-const char *password = ""; // Contraseña de la red WiFi
+const char *ssid = "Familia Morales"; // Nombre de la red WiFi
+const char *password = "2205631700"; // Contraseña de la red WiFi
 
 // MQTT
-const char* server = "";
-const int mqtt_port = 1883;
+const char* server = "200.122.207.134";
+const int mqtt_port = 8310;
 
 WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
