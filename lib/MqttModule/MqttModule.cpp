@@ -27,7 +27,7 @@ void MqttModule::enviarMensajeMQTT(PubSubClient &mqttClient, const String &mensa
 {
     if (mqttClient.connected())
     {
-        mqttClient.publish("smartgrow", mensaje.c_str());
+        mqttClient.publish("smartgrow/sensores/ph_ec", mensaje.c_str());
     }
 }
 

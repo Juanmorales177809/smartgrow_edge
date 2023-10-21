@@ -11,7 +11,6 @@ void HttpModule::activarActuador(const char* server, const int http_port, const 
     estructuraHttp(server, http_port, full_path.c_str(), "GET");
 }
 
-
 void estructuraHttp(String server, const int http_port, String path, String tipoSolicitud) {
     HTTPClient http;
     Serial.println("[HTTP] Iniciando ... ");
