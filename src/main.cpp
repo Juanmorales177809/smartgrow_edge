@@ -49,7 +49,7 @@ void loop()
     String jsonString;
     serializeJson(jsonDocument, jsonString);
 
-    HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str());
+    HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str(), "POST");
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString);
     delay(1000);
   }
