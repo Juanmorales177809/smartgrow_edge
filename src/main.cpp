@@ -115,8 +115,8 @@ void loop() {
   {
     previousMillis = currentMillis;
     StaticJsonDocument<200> jsonDocument; // Ajusta el tamaño según tus necesidades
-    jsonDocument["temperatura"] = temp;
-    jsonDocument["humedad"] = humidity;
+    jsonDocument["temperatura"] = temp/100;
+    jsonDocument["humedad"] = humidity/100;
     jsonDocument["altitud"] = alt;
     jsonDocument["sensor"] = sensor_id;
 
@@ -131,7 +131,7 @@ void loop() {
     delay(1000);
   }
   Serial.print("Temperature = ");
-  Serial.print(temp);
+  Serial.print(temp/100);
   Serial.println(" *C");
 
   Serial.print("Pressure = ");
@@ -139,7 +139,7 @@ void loop() {
   Serial.println(" hPa");
 
         Serial.print("Humidity = ");
-        Serial.print(humidity);
+        Serial.print(humidity/100);
         Serial.println(" %");
 
         Serial.print("Gas = ");
