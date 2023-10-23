@@ -3,10 +3,16 @@
 #include <Wire.h>    
 #include <sequencer2.h> 
 #include <Ezo_i2c_util.h> 
-#include "ph_grav.h"
 #include <PeristalticsModule.h>
+#include <LiquidCrystal_I2C.h>
+#define USE_PULSE_OUT false
+#if USE_PULSE_OUT
+#include "ph_iso_grav.h"             
+#else
+  #include "ph_grav.h"             
+#endif
 
-#define TEL true
+#define TEL false
 
 #if TEL
 #include <WiFi.h>
@@ -16,11 +22,10 @@
 #include "MqttModule.h"
 #include "HttpModule.h"
 
-// WiFi
-const char *ssid = ""; // Nombre de la red WiFi
-const char *password = ""; // Contraseña de la red WiFi
-
-// MQTT
+//===============================================================
+const char *ssid = "Familia Morales"; // Nombre de la red WiFi
+const char *password = "2205631700"; // Contraseña de la red WiFi
+//===============================================================
 const char* server = "";
 const int mqtt_port = 8310;
 const int http_port = 8311;
@@ -30,13 +35,23 @@ PubSubClient mqttClient(esp32Client);
 String sensorstring = "";
 const char* sensor_id = ""; // ID del sensor
 
+//===============================================================
 const unsigned long interval = 60000; // Intervalo de tiempo en milisegundos (1 min)
 unsigned long previousMillis = 0;
 #endif
-
+//===============================================================
+#if USE_PULSE_OUT
+Gravity_pH_Isolated pH = Gravity_pH_Isolated(32);
+#else 
 Gravity_pH pH = Gravity_pH(32);
+#endif
 Ezo_board EC = Ezo_board(100, "EC");
-
+//===============================================================
+#define lcd_addr 0x27
+#define lcd_cols 16
+#define lcd_rows 2
+LiquidCrystal_I2C lcd(lcd_addr, lcd_cols, lcd_rows);
+//===============================================================
 void step1();  
 void step2();
 
@@ -47,12 +62,26 @@ float analog_ph;
 
 Sequencer2 Seq(&step1, 1000, &step2, 0);
 
+byte Celsius[8] = {
+0b00110,
+0b01001,
+0b01000,
+0b01000,
+0b01001,
+0b00110,
+0b00000,
+0b00000
+};
+
 void setup()
 {
   Wire.begin();
+  lcd.init();
+  lcd.backlight();
   Serial.begin(115200);
   Seq.reset();
-  pH.begin();
+  
+
   #if TEL
   sensorstring.reserve(30);  
   WiFiModule::conectarWiFi(ssid, password);
@@ -64,9 +93,11 @@ void setup()
 void loop()
 {
   Seq.run();
+  #if TEL
   if (!mqttClient.connected()) {
     MqttModule::conectarMQTT(mqttClient, server, mqtt_port);
   }
+  #endif
   #if TEL
   mqttClient.loop();
   unsigned long currentMillis = millis();
@@ -91,6 +122,8 @@ void loop()
 }
 
 void step1(){
+  lcd.createChar(0, Celsius);
+  lcd.setCursor(0,0);
   EC.send_cmd_with_num("T,", 25.0);
   ph = pH.read_ph();                      
   EC.send_read_cmd();
@@ -102,8 +135,18 @@ void step2(){
   Serial.print("PH: ");
   Serial.println(ph);
   receive_and_print_reading(EC);             //get the reading from the EC circuit
-  
+  lcd.print("PH: ");
+  lcd.print(ph);
+  lcd.setCursor(0,1);
+  lcd.print("TDS: ");
+  lcd.print(EC.get_last_received_reading()*0.5);
   Serial.println();
   Serial.print("TDS: ");
   Serial.println(EC.get_last_received_reading()*0.5);
+  lcd.setCursor(11,1);
+  lcd.print("23.0");
+  lcd.setCursor(15,1);
+  lcd.write(byte(0));
+  
+  
 }
