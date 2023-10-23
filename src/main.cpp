@@ -6,11 +6,14 @@
 #include <Wire.h>
 #include <SPI.h>
 #include "Zanshin_BME680.h"
+#define TEL false
+#if TEL
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include "WifiModule.h"
 #include "MqttModule.h"
 #include "HttpModule.h"
+#endif
 
 #define BME_SCK 13
 #define BME_MISO 12
@@ -21,8 +24,9 @@
 
 
 // WiFi
-const char *ssid = "Familia Morales"; // Nombre de la red WiFi
-const char *password = "2205631700"; // Contraseña de la red WiFi
+#if TEL
+const char *ssid = "Convergentes"; // Nombre de la red WiFi
+const char *password = "RedesConvergentes*#"; // Contraseña de la red WiFi
 
 // MQTT
 const char* server = "200.122.207.134";
@@ -31,16 +35,14 @@ const int http_port = 8311;
 
 WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
+#endif
 //============================================================================  
 const u32_t SERIAL_SPEED{115200};
 BME680_Class BME680;
-
 const char* sensor_id = "651203198748ed5dd33b6d2e"; // ID del sensor
-
 const unsigned long interval = 300000; // Intervalo de tiempo en milisegundos (1 min)
 unsigned long previousMillis = 0;
 //=============================================================================
-
 float altitude(const int32_t press, const float seaLevel = 1013.25);
 float altitude(const int32_t press, const float seaLevel) {
   /*!
@@ -63,9 +65,11 @@ void setup() {
   Serial.begin(SERIAL_SPEED);
   while (!Serial);
   Serial.println(F("BME680 test"));
+  #if TEL
   WiFiModule::conectarWiFi(ssid, password);
   mqttClient.setServer(server, mqtt_port);
   mqttClient.setCallback(MqttModule::callback);
+  #endif
 //==============================================================================
   while (!BME680.begin(I2C_STANDARD_MODE)) {  // Start BME680 using I2C, use first device found
     Serial.print(F("-  Unable to find BME680. Trying again in 5 seconds.\n"));
@@ -105,7 +109,7 @@ void loop() {
     Serial.print(buf);
     sprintf(buf, "%4d.%02d\n", (int16_t)(gas / 100), (uint8_t)(gas % 100));  // Resistance milliohms
     Serial.print(buf);
-
+#if TEL
   if (!mqttClient.connected()) {
     MqttModule::conectarMQTT(mqttClient, server, mqtt_port);
   }
@@ -130,6 +134,7 @@ void loop() {
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString, topic);
     delay(1000);
   }
+  #endif
   Serial.print("Temperature = ");
   Serial.print(temp/100);
   Serial.println(" *C");
@@ -138,20 +143,20 @@ void loop() {
   Serial.print(pressure);
   Serial.println(" hPa");
 
-        Serial.print("Humidity = ");
-        Serial.print(humidity/100);
-        Serial.println(" %");
+  Serial.print("Humidity = ");
+  Serial.print(humidity/1000);
+  Serial.println(" %");
 
-        Serial.print("Gas = ");
-        Serial.print(gas);
-        Serial.println(" KOhms");
+  Serial.print("Gas = ");
+  Serial.print(gas);
+  Serial.println(" KOhms");
 
-        Serial.print("Approx. Altitude = ");
-        Serial.print(alt);
-        Serial.println(" m");
+  Serial.print("Approx. Altitude = ");
+  Serial.print(alt);
+  Serial.println(" m");
 
-        Serial.println();
-        delay(2000);
+  Serial.println();
+  delay(2000);
       }
     } // Add the missing curly brace here
   // Add the missing curly brace here
