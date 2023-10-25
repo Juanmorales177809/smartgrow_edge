@@ -1,0 +1,73 @@
+#include <Arduino.h>
+#include <LiquidCrystal_I2C.h>
+#include "ph_grav.h"            
+#include <sequencer2.h>
+
+
+//===============================================================
+Gravity_pH pH = Gravity_pH(33);
+
+//===============================================================
+#define lcd_addr 0x27
+#define lcd_cols 16
+#define lcd_rows 2
+LiquidCrystal_I2C lcd(lcd_addr, lcd_cols, lcd_rows);
+//===============================================================
+void step1();  
+void step2();
+
+float TDS_float;
+float ph;                 
+float temp_float;                
+float analog_ph;
+
+Sequencer2 Seq(&step1, 1000, &step2, 0);
+
+byte Celsius[8] = {
+0b00110,
+0b01001,
+0b01000,
+0b01000,
+0b01001,
+0b00110,
+0b00000,
+0b00000
+};
+
+void setup()
+{
+  Wire.begin();
+  lcd.init();
+  lcd.backlight();
+  Serial.begin(115200);
+  Seq.reset();
+  
+}
+
+void loop()
+{
+  Seq.run();
+  
+}
+
+void step1(){
+  lcd.createChar(0, Celsius);
+  lcd.setCursor(0,0);
+  ph = pH.read_ph();                      
+  analog_ph = float(ph);
+  delay(1000);
+}
+
+void step2(){
+  Serial.print("PH: ");
+  Serial.println(ph);
+  lcd.print("PH: ");
+  lcd.print(ph);
+  lcd.setCursor(0,1);
+  lcd.setCursor(11,1);
+  lcd.print("23.0");
+  lcd.setCursor(15,1);
+  lcd.write(byte(0));
+  
+  
+}

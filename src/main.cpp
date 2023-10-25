@@ -60,6 +60,11 @@ float ph;
 float temp_float;                
 float analog_ph;
 
+uint8_t user_bytes_received = 0;                
+const uint8_t bufferlen = 32;                   
+char user_data[bufferlen];                     
+
+
 Sequencer2 Seq(&step1, 1000, &step2, 0);
 
 byte Celsius[8] = {
@@ -120,6 +125,25 @@ void loop()
   }
   #endif
 }
+void parse_cmd(char* string) {                   
+  strupr(string);                                
+  if (strcmp(string, "CAL,7") == 0) {       
+    pH.cal_mid();                                
+    Serial.println("MID CALIBRATED");
+  }
+  else if (strcmp(string, "CAL,4") == 0) {            
+    pH.cal_low();                                
+    Serial.println("LOW CALIBRATED");
+  }
+  else if (strcmp(string, "CAL,10") == 0) {      
+    pH.cal_high();                               
+    Serial.println("HIGH CALIBRATED");
+  }
+  else if (strcmp(string, "CAL,CLEAR") == 0) { 
+    pH.cal_clear();                              
+    Serial.println("CALIBRATION CLEARED");
+  }
+}
 
 void step1(){
   lcd.createChar(0, Celsius);
@@ -128,6 +152,15 @@ void step1(){
   ph = pH.read_ph();                      
   EC.send_read_cmd();
   analog_ph = float(ph);
+  if (Serial.available() > 0) {                                                      
+    user_bytes_received = Serial.readBytesUntil(13, user_data, sizeof(user_data));   
+  }
+
+   if (user_bytes_received) {                                                      
+    parse_cmd(user_data);                                                          
+    user_bytes_received = 0;                                                        
+    memset(user_data, 0, sizeof(user_data));                                         
+  }
   delay(1000);
 }
 
@@ -138,13 +171,13 @@ void step2(){
   lcd.print("PH: ");
   lcd.print(ph);
   lcd.setCursor(0,1);
-  lcd.print("TDS: ");
-  lcd.print(EC.get_last_received_reading()*0.5);
+  lcd.print("EC: ");
+  lcd.print(EC.get_last_received_reading());
   Serial.println();
-  Serial.print("TDS: ");
-  Serial.println(EC.get_last_received_reading()*0.5);
-  lcd.setCursor(11,1);
-  lcd.print("23.0");
+  Serial.print("EC: ");
+  Serial.println(EC.get_last_received_reading());
+  //lcd.setCursor(11,1);
+  //lcd.print("23.0");
   lcd.setCursor(15,1);
   lcd.write(byte(0));
   
