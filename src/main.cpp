@@ -6,7 +6,7 @@
 #include <Wire.h>
 #include <SPI.h>
 #include "Zanshin_BME680.h"
-#define TEL false
+#define TEL true
 #if TEL
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
@@ -29,9 +29,12 @@ const char *ssid = "Convergentes"; // Nombre de la red WiFi
 const char *password = "RedesConvergentes*#"; // Contraseña de la red WiFi
 
 // MQTT
-const char* server = "200.122.207.134";
-const int mqtt_port = 8310;
-const int http_port = 8311;
+const char* server = "172.16.20.94";
+const int mqtt_port = 1883;
+const int http_port = 3000;
+// const char* server = "200.122.207.134";
+// const int mqtt_port = 8310;
+// const int http_port = 8311;
 
 WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
@@ -40,7 +43,7 @@ PubSubClient mqttClient(esp32Client);
 const u32_t SERIAL_SPEED{115200};
 BME680_Class BME680;
 const char* sensor_id = "651203198748ed5dd33b6d2e"; // ID del sensor
-const unsigned long interval = 300000; // Intervalo de tiempo en milisegundos (1 min)
+const unsigned long interval = 1000; // Intervalo de tiempo en milisegundos (1 min)
 unsigned long previousMillis = 0;
 //=============================================================================
 float altitude(const int32_t press, const float seaLevel = 1013.25);
