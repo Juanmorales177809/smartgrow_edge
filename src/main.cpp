@@ -4,13 +4,10 @@
 #include <sequencer2.h> 
 #include <Ezo_i2c_util.h> 
 #include <PeristalticsModule.h>
-#include <LiquidCrystal_I2C.h>
-#define USE_PULSE_OUT false
-#if USE_PULSE_OUT
-#include "ph_iso_grav.h"             
-#else
-  #include "ph_grav.h"             
-#endif
+#include <LiquidCrystal_I2C.h>            
+
+#include "ph_grav.h"             
+
 
 #define TEL false
 
@@ -40,11 +37,7 @@ const unsigned long interval = 60000; // Intervalo de tiempo en milisegundos (1 
 unsigned long previousMillis = 0;
 #endif
 //===============================================================
-#if USE_PULSE_OUT
-Gravity_pH_Isolated pH = Gravity_pH_Isolated(32);
-#else 
 Gravity_pH pH = Gravity_pH(32);
-#endif
 Ezo_board EC = Ezo_board(100, "EC");
 //===============================================================
 #define lcd_addr 0x27

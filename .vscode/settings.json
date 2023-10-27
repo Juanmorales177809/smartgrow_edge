@@ -65,5 +65,7 @@
   "C_Cpp_Runner.useLeakSanitizer": false,
   "C_Cpp_Runner.showCompilationTime": false,
   "C_Cpp_Runner.useLinkTimeOptimization": false,
-  "C_Cpp_Runner.msvcSecureNoWarnings": false
+  "C_Cpp_Runner.msvcSecureNoWarnings": false,
+  "cmake.sourceDirectory": "C:/Users/sistemas 1/Documents/smartgrow_edge/.pio/libdeps/esp32thing_plus/ArduinoJson",
+  "cmake.configureOnOpen": true
 }
