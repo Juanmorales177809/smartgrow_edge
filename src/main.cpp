@@ -1,11 +1,15 @@
-#include <Arduino.h>
-#include "SparkFun_SCD4x_Arduino_Library.h"
-#include <Adafruit_SleepyDog.h>
+#include <Arduino.h> //Required for Visual Studio Code
+#include "SparkFun_SCD4x_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_SCD4x
+#include "SparkFun_AS7265X.h"  //Click here to get the library: http://librarymanager/All#SparkFun_AS7265X
+
+AS7265X sensor; //Create instance of the AS7265X sensor
+
+#include <Wire.h> //Include the I2C library
+#include <Adafruit_SleepyDog.h> //Include the watchdog library
 
 #define TEL false
 #if TEL
 #include <WiFi.h>
-#include <Wire.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include "WiFiModule.h"
@@ -36,12 +40,30 @@ void setup()
   Wire.begin();
   mySensor.begin();
   //=======================================================================
+  if (sensor.begin() == false) //Begin returns 1 if device ID is incorrect
+  {
+    Serial.println("Error: Unable to communicate to AS7265x sensor.");
+    while (1)
+      ; //Freeze
+  }
+
   #if TEL
   WiFiModule::conectarWiFi(ssid, password);
   mqttClient.setServer(server, mqtt_port);
   mqttClient.setCallback(MqttModule::callback);
   Watchdog.enable(30000);
   #endif
+}
+float ppf(float counts){
+  float A = sensor.getCalibratedA();
+  float B = sensor.getCalibratedB();
+  float C = sensor.getCalibratedC();
+  float D = sensor.getCalibratedD();
+  float E = sensor.getCalibratedE();
+  float F = sensor.getCalibratedF();
+  
+
+  
 }
 float calcularVPD(float temperatura, float humedad){
   
