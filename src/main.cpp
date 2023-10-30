@@ -20,13 +20,15 @@
 #include "HttpModule.h"
 
 //===============================================================
-const char *ssid = "Familia Morales"; // Nombre de la red WiFi
-const char *password = "2205631700"; // Contraseña de la red WiFi
+const char *ssid = "Convergentes"; // Nombre de la red WiFi
+const char *password = "RedesConvergentes*#"; // Contraseña de la red WiFi
 //===============================================================
-const char* server = "200.122.207.134";
-const int mqtt_port = 8310;
-const int http_port = 8311;
-
+// const char* server = "200.122.207.134";
+// const int mqtt_port = 8310;
+// const int http_port = 8311;
+const char* server = "172.16.20.94";
+const int mqtt_port = 1883;
+const int http_port = 3000;
 
 WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
@@ -34,7 +36,7 @@ String sensorstring = "smartgrow/sensores/";
 const char* sensor_id = "651b3c1a60ccd1c529a301d5"; // ID del sensor
 
 //===============================================================
-const unsigned long interval = 60000; // Intervalo de tiempo en milisegundos (1 min)
+const unsigned long interval = 1000; // Intervalo de tiempo en milisegundos (1 min)
 unsigned long previousMillis = 0;
 #endif
 //===============================================================
@@ -160,7 +162,7 @@ void send_data(){
     Serial.println(jsonString);
     lcd.setCursor(14,1);
     lcd.write(byte(3));
-    HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str(), "/phec");
+    HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str(), "phec");
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString);
     delay(1000);
   }

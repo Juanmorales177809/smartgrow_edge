@@ -11,6 +11,6 @@ public:
     static void activarActuador(const char *server, const int http_port, const char *path, const char *idActuador);
 };
 
-void estructuraHttp(String server, const int http_port, String path, String tipoSolicitud);
+void estructuraHttp(String server, const int http_port, String path, String tipoSolicitud,const char *jsonString);
 
 #endif
