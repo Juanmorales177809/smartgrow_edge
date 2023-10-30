@@ -96,6 +96,18 @@ byte frownie[8] = {
 0b01110,
 0b10001
 };
+
+byte email[8] = { 
+                    0b11111,
+                    0b00000,
+                    0b01110,
+                    0b00000,
+                    0b00100,
+                    0b00000,
+                    0b00100,
+                    0b00000
+};
+
 void setup()
 {
   Wire.begin();
@@ -120,8 +132,8 @@ void setup()
 }
 #if TEL
 void send_data(){
-
-  if (!mqttClient.connected()) {
+  // Verificar si la conexión con el servidor MQTT está activa
+  if (!mqttClient.connected()) {//
     lcd.setCursor(15,1);
     lcd.write(byte(2));
     lcd.setCursor(0,1);
@@ -130,6 +142,7 @@ void send_data(){
     lcd.setCursor(15,1);
     lcd.write(byte(1));
   }
+  // Verificar si la conexión con el servidor HTTP está activa
   mqttClient.loop();
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval)
@@ -144,7 +157,9 @@ void send_data(){
     // Serializar el JSON en una cadena
     String jsonString;
     serializeJson(jsonDocument, jsonString);
-
+    Serial.println(jsonString);
+    lcd.setCursor(14,1);
+    lcd.write(byte(3));
     HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str(), "/phec");
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString);
     delay(1000);
@@ -187,6 +202,7 @@ void step1(){
   lcd.createChar(0, Celsius);
   lcd.createChar(1, smiley);
   lcd.createChar(2, frownie);
+  lcd.createChar(3, email);
   lcd.setCursor(0,0);
   EC.send_cmd_with_num("T,", 25.0);
   voltage = pH.read_voltage();

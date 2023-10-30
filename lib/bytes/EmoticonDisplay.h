@@ -9,6 +9,7 @@ class EmoticonDisplay{
         const byte* getCelsius();
         const byte* getSmiley();
         const byte* getFrownie();
+        const byte* getEmail();
     private:
         
         const byte Celsius[8] = { 
@@ -43,7 +44,16 @@ class EmoticonDisplay{
                         0b01110,
                         0b10001
                         };
-    
+    const byte email[8] = { 
+                        0b00000,
+                        0b00000,
+                        0b01010,
+                        0b00000,
+                        0b00000,
+                        0b00000,
+                        0b01110,
+                        0b10001
+                        };
 };
 
 

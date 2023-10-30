@@ -21,3 +21,7 @@ const byte* EmoticonDisplay::getSmiley(){
 const byte* EmoticonDisplay::getFrownie(){
     return frownie;
 }   
+
+const byte* EmoticonDisplay::getEmail(){
+    return email;
+}
