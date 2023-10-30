@@ -11,6 +11,7 @@ void MqttModule::conectarMQTT(PubSubClient &mqttClient, const char *server, int 
         if (mqttClient.connect("arduinoClient"))
         {
             Serial.println("Conectado");
+
             mqttClient.subscribe("smartgrow");
         }
         else
@@ -27,7 +28,7 @@ void MqttModule::enviarMensajeMQTT(PubSubClient &mqttClient, const String &mensa
 {
     if (mqttClient.connected())
     {
-        mqttClient.publish("smartgrow/sensores/ph_ec", mensaje.c_str());
+        mqttClient.publish("smartgrow/sensores/phec", mensaje.c_str());
     }
 }
 

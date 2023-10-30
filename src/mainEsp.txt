@@ -4,12 +4,12 @@
 #include <sequencer2.h> 
 #include <Ezo_i2c_util.h> 
 #include <PeristalticsModule.h>
-#include <LiquidCrystal_I2C.h>    
-#include <EmoticonDisplay.h>    
+#include <LiquidCrystal_I2C.h>            
 
-#include "ph_grav.h"
+#include "ph_grav.h"             
 
-#define TEL true
+
+#define TEL false
 
 #if TEL
 #include <WiFi.h>
@@ -23,22 +23,20 @@
 const char *ssid = "Familia Morales"; // Nombre de la red WiFi
 const char *password = "2205631700"; // Contraseña de la red WiFi
 //===============================================================
-const char* server = "200.122.207.134";
+const char* server = "";
 const int mqtt_port = 8310;
 const int http_port = 8311;
 
-
 WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
-String sensorstring = "smartgrow/sensores/";
-const char* sensor_id = "651b3c1a60ccd1c529a301d5"; // ID del sensor
+String sensorstring = "";
+const char* sensor_id = ""; // ID del sensor
 
 //===============================================================
 const unsigned long interval = 60000; // Intervalo de tiempo en milisegundos (1 min)
 unsigned long previousMillis = 0;
 #endif
 //===============================================================
-
 Gravity_pH pH = Gravity_pH(32);
 Ezo_board EC = Ezo_board(100, "EC");
 //===============================================================
@@ -46,7 +44,6 @@ Ezo_board EC = Ezo_board(100, "EC");
 #define lcd_cols 16
 #define lcd_rows 2
 LiquidCrystal_I2C lcd(lcd_addr, lcd_cols, lcd_rows);
-EmoticonDisplay bytes;
 //===============================================================
 void step1();  
 void step2();
@@ -59,9 +56,8 @@ float analog_ph;
 uint8_t user_bytes_received = 0;                
 const uint8_t bufferlen = 32;                   
 char user_data[bufferlen];                     
-float ec;
-float voltage;
-PeristalticsModule peristalticsModule;
+
+
 Sequencer2 Seq(&step1, 1000, &step2, 0);
 
 byte Celsius[8] = {
@@ -75,27 +71,6 @@ byte Celsius[8] = {
 0b00000
 };
 
-byte smiley[8] = {
-0b00000,
-0b00000,
-0b01010,
-0b00000,
-0b00000,
-0b10001,
-0b01110,
-0b00000
-};
-
-byte frownie[8] = {
-0b00000,
-0b00000,
-0b01010,
-0b00000,
-0b00000,
-0b00000,
-0b01110,
-0b10001
-};
 void setup()
 {
   Wire.begin();
@@ -103,13 +78,7 @@ void setup()
   lcd.backlight();
   Serial.begin(115200);
   Seq.reset();
-  if (pH.begin()) {                                     
-    Serial.println("Loaded EEPROM");
-  }
-  else {
-    Serial.println("Error loading EEPROM");
-  }
-  peristalticsModule.configInit();
+  
 
   #if TEL
   sensorstring.reserve(30);  
@@ -118,18 +87,16 @@ void setup()
   mqttClient.setCallback(MqttModule::callback);  
   #endif
 }
-#if TEL
-void send_data(){
 
+void loop()
+{
+  Seq.run();
+  #if TEL
   if (!mqttClient.connected()) {
-    lcd.setCursor(15,1);
-    lcd.write(byte(2));
-    lcd.setCursor(0,1);
     MqttModule::conectarMQTT(mqttClient, server, mqtt_port);
-  }else{
-    lcd.setCursor(15,1);
-    lcd.write(byte(1));
   }
+  #endif
+  #if TEL
   mqttClient.loop();
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval)
@@ -149,16 +116,8 @@ void send_data(){
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString);
     delay(1000);
   }
-  
+  #endif
 }
-#endif
-void loop()
-{
-  Seq.run();
-  
-
-}
-
 void parse_cmd(char* string) {                   
   strupr(string);                                
   if (strcmp(string, "CAL,7") == 0) {       
@@ -180,17 +139,10 @@ void parse_cmd(char* string) {
 }
 
 void step1(){
-  #if TEL
-  send_data(); // enviar datos para el backend
-  #endif
-  
   lcd.createChar(0, Celsius);
-  lcd.createChar(1, smiley);
-  lcd.createChar(2, frownie);
   lcd.setCursor(0,0);
   EC.send_cmd_with_num("T,", 25.0);
-  voltage = pH.read_voltage();
-  ph = pH.read_ph(voltage);                      
+  ph = pH.read_ph();                      
   EC.send_read_cmd();
   analog_ph = float(ph);
   if (Serial.available() > 0) {                                                      
@@ -209,30 +161,18 @@ void step2(){
   Serial.print("PH: ");
   Serial.println(ph);
   receive_and_print_reading(EC);             //get the reading from the EC circuit
-  // if (peristalticsModule.estado == false)
-  // peristalticsModule.acciones("bionovaA", true);
-  // if (peristalticsModule.estado == true)
-  // peristalticsModule.acciones("bionovaA", false);
-  // peristalticsModule.acciones("bionovaA", false);
-  // delay(10000);
-  // peristalticsModule.acciones("bionovaB");
-  // peristalticsModule.acciones("phDown");
   lcd.print("PH: ");
   lcd.print(ph);
   lcd.setCursor(0,1);
   lcd.print("EC: ");
   lcd.print(EC.get_last_received_reading());
   Serial.println();
-  // Serial.print("TDS: ");
-  // Serial.println(EC.get_last_received_reading());
-  lcd.setCursor(9,0);
-  lcd.print("T:");
-  lcd.setCursor(11,0);
-  lcd.print("23.0");
-  lcd.setCursor(15,0);
-  lcd.write(byte(0));
+  Serial.print("EC: ");
+  Serial.println(EC.get_last_received_reading());
+  //lcd.setCursor(11,1);
+  //lcd.print("23.0");
   lcd.setCursor(15,1);
-  lcd.write(byte(1));
+  lcd.write(byte(0));
   
   
 }
