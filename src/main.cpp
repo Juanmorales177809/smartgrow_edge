@@ -10,6 +10,7 @@
 #include "ph_grav.h"
 
 #define TEL true
+#define LOCAL false
 
 #if TEL
 #include <WiFi.h>
@@ -20,16 +21,24 @@
 #include "HttpModule.h"
 
 //===============================================================
+#if LOCAL
 const char *ssid = "Convergentes"; // Nombre de la red WiFi
 const char *password = "RedesConvergentes*#"; // Contraseña de la red WiFi
+#else
+const char *ssid = "Familia Morales"; // Nombre de la red WiFi
+const char *password = "2205631700"; // Contraseña de la red WiFi
+#endif
 //===============================================================
-// const char* server = "200.122.207.134";
-// const int mqtt_port = 8310;
-// const int http_port = 8311;
+#if LOCAL
 const char* server = "172.16.20.94";
 const int mqtt_port = 1883;
 const int http_port = 3000;
-
+#else
+const char* server = "200.122.207.134";
+const int mqtt_port = 8310;
+const int http_port = 8311;
+#endif
+//===============================================================
 WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
 String sensorstring = "smartgrow/sensores/";
