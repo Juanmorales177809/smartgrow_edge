@@ -2,12 +2,14 @@
 #include "SparkFun_SCD4x_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_SCD4x
 #include "SparkFun_AS7265X.h"  //Click here to get the library: http://librarymanager/All#SparkFun_AS7265X
 
-AS7265X sensor; //Create instance of the AS7265X sensor
+// AS7265X sensor; //Create instance of the AS7265X sensor
 
 #include <Wire.h> //Include the I2C library
 #include <Adafruit_SleepyDog.h> //Include the watchdog library
 
-#define TEL false
+#define TEL true
+#define LOCAL false
+
 #if TEL
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -18,12 +20,20 @@ AS7265X sensor; //Create instance of the AS7265X sensor
 #endif
 //=======================================================================
 #if TEL
+
+#if LOCAL
+const char *ssid = "Convergentes"; // Nombre de la red WiFi
+const char *password = "RedesConvergentes*#"; // Contraseña de la red WiFi
+const char* server = "172.16.20.94"; // IP local del servidor MQTT
+const int mqtt_port = 1883;
+const int http_port = 3000;
+#else
 const char *ssid = "Familia Morales"; // Nombre de la red WiFi
 const char *password = "2205631700"; // Contraseña de la red WiFi
-// MQTT Server connection data 
-const char* server = "200.122.207.134";
+const char* server = "200.122.207.134"; // IP publica del servidor MQTT
 const int mqtt_port = 8310;
 const int http_port = 8311;
+#endif
 WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
 #endif
@@ -40,31 +50,43 @@ void setup()
   Wire.begin();
   mySensor.begin();
   //=======================================================================
-  if (sensor.begin() == false) //Begin returns 1 if device ID is incorrect
-  {
-    Serial.println("Error: Unable to communicate to AS7265x sensor.");
-    while (1)
-      ; //Freeze
-  }
+  // if (sensor.begin() == false) //Begin returns 1 if device ID is incorrect
+  // {
+  //   Serial.println("Error: Unable to communicate to AS7265x sensor.");
+  //   while (1)
+  //     ; //Freeze
+  // }
 
   #if TEL
   WiFiModule::conectarWiFi(ssid, password);
   mqttClient.setServer(server, mqtt_port);
   mqttClient.setCallback(MqttModule::callback);
-  Watchdog.enable(30000);
+  //Watchdog.enable(30000);
   #endif
 }
-float ppf(float counts){
-  float A = sensor.getCalibratedA();
-  float B = sensor.getCalibratedB();
-  float C = sensor.getCalibratedC();
-  float D = sensor.getCalibratedD();
-  float E = sensor.getCalibratedE();
-  float F = sensor.getCalibratedF();
+// float ppf(float counts){
+//   float A = sensor.getCalibratedA();
+//   float B = sensor.getCalibratedB();
+//   float C = sensor.getCalibratedC();
+//   float D = sensor.getCalibratedD();
+//   float E = sensor.getCalibratedE();
+//   float F = sensor.getCalibratedF();
+//   float G = sensor.getCalibratedG();
+//   float H = sensor.getCalibratedH();
+//   float I = sensor.getCalibratedI();
+//   float J = sensor.getCalibratedJ();
+//   float K = sensor.getCalibratedK();
+//   float L = sensor.getCalibratedL();
+//   float M = sensor.getCalibratedM();
+//   float N = sensor.getCalibratedN();
+//   float O = sensor.getCalibratedO();
+//   float P = sensor.getCalibratedP();
+//   float Q = sensor.getCalibratedQ();
+//   float R = sensor.getCalibratedR();
   
 
   
-}
+// }
 float calcularVPD(float temperatura, float humedad){
   
   VPD = 0.611 * exp((17.27 * temperatura) / (temperatura + 237.3)) - (humedad / 100) * 0.611 * exp((17.27 * temperatura) / (temperatura + 237.3));//Calculo de VPD  con la formula de Buck 1996 (https://es.wikipedia.org/wiki/Presi%C3%B3n_de_vapor_de_agua)
@@ -105,7 +127,7 @@ void loop()
     String topic = "smartgrow/sensores/scd40";
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString, topic);
     #endif
-    Watchdog.reset();
+    // Watchdog.reset();
     delay(1000);
   }
 }

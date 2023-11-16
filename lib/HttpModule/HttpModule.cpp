@@ -5,7 +5,7 @@
 void HttpModule::enviarDatosHTTP(const char* server, const int http_port, const char* jsonString) {
     HTTPClient http;
     Serial.println("[HTTP] Iniciando ... ");
-    http.begin("http://" + String(server) + ":" + String(http_port) + "/SCD40-AS7265x");
+    http.begin("http://" + String(server) + ":" + String(http_port) + "/scd40");
     http.addHeader("Content-Type", "application/json");
     Serial.println("[HTTP] POST...");
     Serial.println(jsonString);
