@@ -1,12 +1,17 @@
-#ifndef WiFiModule_h
-#define WiFiModule_h
+#ifndef WifiModule_h
+#define WifiModule_h
 
 #include <WiFi.h>
 
-class WiFiModule {
+class WifiModule
+{
 public:
-    static void conectarWiFi(const char* ssid, const char* password);
+    WifiModule(const char *ssid, const char *password);
+    void conectarWifi();
+
+private:
+    const char *ssid;
+    const char *password;
 };
 
 #endif
-

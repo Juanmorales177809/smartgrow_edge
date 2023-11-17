@@ -3,9 +3,15 @@
 
 #include <Arduino.h>
 
-class HttpModule {
+class HttpModule
+{
 public:
-    static void enviarDatosHTTP(const char* server, const int http_port, const char* jsonString);
+    HttpModule(const char* server, int http_port);
+    void enviarDatosHTTP(const char *jsonString, const char *path);
+    void activarActuador(const char *path, const char *idActuador);
+private:
+    const char *server;
+    int http_port;
+    void estructuraHttp(const char *path, const char *tipoSolicitud, const char* jsonString);
 };
-
 #endif

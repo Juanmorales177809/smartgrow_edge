@@ -1,8 +1,13 @@
-#include "WiFiModule.h"
+#include "WifiModule.h"
 
-void WiFiModule::conectarWiFi(const char* ssid, const char* password) {
+WifiModule::WifiModule(const char *ssid,const char *password){
+    this->ssid = ssid;
+    this->password = password;
+}
+
+void WifiModule::conectarWifi() {
     WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
+    WiFi.begin(this->ssid, this->password);
     Serial.println("Conectando a WiFi");
     while (WiFi.status() != WL_CONNECTED) {
         Serial.println(".");
