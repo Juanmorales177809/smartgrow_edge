@@ -3,6 +3,8 @@
 int var = 0;         // Definir var globalmente
 String resultS = ""; // Definir resultS globalmente
 
+
+
 void MqttModule::conectarMQTT(PubSubClient &mqttClient, const char *server, int port)
 {
     while (!mqttClient.connected())

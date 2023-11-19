@@ -1,13 +1,14 @@
 #include <Arduino.h> //Required for Visual Studio Code
 #include "SparkFun_AS7265X.h"  //Click here to get the library: http://librarymanager/All#SparkFun_AS7265X
+#include <SensirionI2CScd4x.h> //Click here to get the library: http://librarymanager/All#SensirionI2CScd4x
 
-AS7265X sensor; //Create instance of the AS7265X sensor
 
 #include <Wire.h> //Include the I2C library
 #include <Adafruit_SleepyDog.h> //Include the watchdog library
 
-#define TEL true
-#define LOCAL false
+#define TEL true  // true para enviar datos a servidor, false para no enviar datos
+#define LOCAL false // true para servidor local, false para servidor remoto
+#define SENSORID1 true // true para sensor 1, false para sensor 2
 
 #if TEL
 #include "WifiModule.h"
@@ -33,29 +34,39 @@ const int mqtt_port = 8310;
 #endif
 WifiModule wifiModule(ssid, password);
 HttpModule httpClient(server, http_port);
+
 #endif
 //=======================================================================
-const char* sensor_id = "650dc7d640e0be7842fc4239"; // ID del sensor SCD40
+#if SENSORID1
+const char* sensor_id = "650dc7d640e0be7842fc4239"; // ID del sensor SCD40_1
+#else
+const char* sensor_id = "65391fa4700d51b6d681b3c5"; // ID del sensor SCD40_2
+#endif
 SCD40Sensor SCD40(sensor_id);
 
-const unsigned long interval = 30000; // Intervalo de tiempo en milisegundos (5 min)
+//=======================================================================
+
+//AS7265X sensor; //Create instance of the AS7265X sensor
+
+const unsigned long interval = 300000; // Intervalo de tiempo en milisegundos (5 min)
 unsigned long previousMillis = 0;
 //=======================================================================
 void setup()
 {
+  Watchdog.enable(360000);
   Serial.begin(115200);
   Wire.begin();
+  SCD40.begin(Wire);
   //=======================================================================
-  if (sensor.begin() == false) //Begin returns 1 if device ID is incorrect
-  {
-    Serial.println("Error: Unable to communicate to AS7265x sensor.");
-    while (1)
-      ; //Freeze
-  }
+  // if (sensor.begin() == false) //Begin returns 1 if device ID is incorrect
+  // {
+  //   Serial.println("Error: Unable to communicate to AS7265x sensor.");
+  //   while (1)
+  //     ; //Freeze
+  // }
 
   #if TEL
   wifiModule.conectarWifi();
-  //Watchdog.enable(30000);
   #endif
 }
 // float ppf(float counts){
@@ -82,16 +93,21 @@ void setup()
 void loop()
 {
   //=======================================================================
+
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval)
   {
     previousMillis = currentMillis;
+    uint16_t co2 = 0;
+    float temperature = 0.0f;
+    float humidity = 0.0f;
     SCD40.read();
     #if TEL
     String jsonString = SCD40.buildJson();
     httpClient.enviarDatosHTTP(jsonString.c_str(), "scd40");
     delay(1000);
     #endif
+    Watchdog.reset();
   }
 }
 

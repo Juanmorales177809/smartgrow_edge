@@ -8,6 +8,7 @@ extern String resultS;   // Declarar resultS como externa
 
 class MqttModule {
 public:
+    
     static void conectarMQTT(PubSubClient& mqttClient, const char* server, int port);
     static void enviarMensajeMQTT(PubSubClient& mqttClient, const String& mensaje, const String& topic);
     static void callback(char* topic, byte* payload, unsigned int length);
