@@ -38,7 +38,7 @@ HttpModule httpClient(server, http_port);
 const char* sensor_id = "650dc7d640e0be7842fc4239"; // ID del sensor SCD40
 SCD40Sensor SCD40(sensor_id);
 
-const unsigned long interval = 60000; // Intervalo de tiempo en milisegundos (5 min)
+const unsigned long interval = 30000; // Intervalo de tiempo en milisegundos (5 min)
 unsigned long previousMillis = 0;
 //=======================================================================
 void setup()
