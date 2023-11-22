@@ -38,9 +38,9 @@ const char *password = "2205631700"; // Contraseña de la red WiFi
 const char* server = "200.122.207.134"; // IP publica del servidor MQTT
 const int mqtt_port = 8310;
 const int http_port = 8311;
+#endif
 WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
-#endif
 #endif
 //============================================================================  
 const u32_t SERIAL_SPEED{115200};
