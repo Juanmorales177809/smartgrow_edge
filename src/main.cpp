@@ -11,6 +11,7 @@
 
 #define TEL true
 #define LOCAL false
+#define PERSIT true 
 
 #if TEL
 #include <WiFi.h>
@@ -52,6 +53,10 @@ unsigned long previousMillis = 0;
 
 Gravity_pH pH = Gravity_pH(32);
 Ezo_board EC = Ezo_board(100, "EC");
+#if PERSIT
+PeristalticsModule peristalticsModule; 
+#endif
+
 //===============================================================
 #define lcd_addr 0x27
 #define lcd_cols 16
@@ -61,6 +66,7 @@ EmoticonDisplay bytes;
 //===============================================================
 void step1();  
 void step2();
+
 
 float TDS_float;
 float ph;                 
@@ -72,9 +78,7 @@ const uint8_t bufferlen = 32;
 char user_data[bufferlen];                     
 float ec;
 float voltage;
-PeristalticsModule peristalticsModule;
 Sequencer2 Seq(&step1, 1000, &step2, 0);
-
 byte Celsius[8] = {
 0b00110,
 0b01001,
@@ -85,7 +89,6 @@ byte Celsius[8] = {
 0b00000,
 0b00000
 };
-
 byte smiley[8] = {
 0b00000,
 0b00000,
@@ -132,7 +135,9 @@ void setup()
   else {
     Serial.println("Error loading EEPROM");
   }
+  #if PERSIT
   peristalticsModule.configInit();
+  #endif
 
   #if TEL
   sensorstring.reserve(30);  
@@ -175,9 +180,12 @@ void send_data(){
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString);
     delay(1000);
   }
+  #endif
+  
+
   
 }
-#endif
+
 void loop()
 {
   Seq.run();
@@ -236,14 +244,19 @@ void step2(){
   Serial.print("PH: ");
   Serial.println(ph);
   receive_and_print_reading(EC);             //get the reading from the EC circuit
-  // if (peristalticsModule.estado == false)
-  // peristalticsModule.acciones("bionovaA", true);
+  #if PERSIT
+  if (peristalticsModule.estado == false){
+  peristalticsModule.acciones("bionovaA", true);
+  }else{
+    peristalticsModule.acciones("bionovaA", false);
+  }
   // if (peristalticsModule.estado == true)
   // peristalticsModule.acciones("bionovaA", false);
   // peristalticsModule.acciones("bionovaA", false);
   // delay(10000);
-  // peristalticsModule.acciones("bionovaB");
-  // peristalticsModule.acciones("phDown");
+  // peristalticsModule.acciones("bionovaB",false);
+  // peristalticsModule.acciones("phDown", false);
+  #endif
   lcd.print("PH: ");
   lcd.print(ph);
   lcd.setCursor(0,1);
