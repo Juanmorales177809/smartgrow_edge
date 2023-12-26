@@ -11,7 +11,11 @@
 
 #define TEL true
 #define LOCAL false
-#define PERSIT true 
+#define PERSIT false
+#define ELEC true
+#define PHMETER true
+#define DISPLAYS true
+#define PT1000 true
 
 #if TEL
 #include <WiFi.h>
@@ -50,13 +54,19 @@ const unsigned long interval = 1000; // Intervalo de tiempo en milisegundos (1 m
 unsigned long previousMillis = 0;
 #endif
 //===============================================================
-
+#if PHMETER
 Gravity_pH pH = Gravity_pH(32);
+#endif
+#if ELEC
 Ezo_board EC = Ezo_board(100, "EC");
+#endif
 #if PERSIT
 PeristalticsModule peristalticsModule; 
 #endif
-
+//===============================================================
+#if PT1000
+Ezo_board RTD = Ezo_board(102, "RTD"); 
+#endif
 //===============================================================
 #define lcd_addr 0x27
 #define lcd_cols 16
@@ -66,19 +76,33 @@ EmoticonDisplay bytes;
 //===============================================================
 void step1();  
 void step2();
-
-
+//===============================================================
+#if ELEC
+char EC_data[32];
+char *EC_str;                     //char pointer used in string parsing.
+char *TDS;                       //char pointer used in string parsing.
+float EC_float;
 float TDS_float;
+#endif
+#if PHMETER
 float ph;                 
 float temp_float;                
 float analog_ph;
+float voltage;
+#endif
+#if PT1000
+char computerdata[20];
+char RTD_data[20]; 
+float tmp_float; 
+#endif
 
+//===============================================================
 uint8_t user_bytes_received = 0;                
 const uint8_t bufferlen = 32;                   
-char user_data[bufferlen];                     
-float ec;
-float voltage;
-Sequencer2 Seq(&step1, 1000, &step2, 0);
+char user_data[bufferlen];   
+//===============================================================
+Sequencer2 Seq(&step1, 1000, &step2, 300);
+//===============================================================
 byte Celsius[8] = {
 0b00110,
 0b01001,
@@ -122,19 +146,31 @@ byte email[8] = {
                     0b00000
 };
 
+
 void setup()
 {
+  //=================================================================
+  Serial.begin(115200);
   Wire.begin();
+  Seq.reset();
+  delay(3000);
+  #if ELEC
+  EC.send_cmd("o,tds,1"); 
+  delay(3000);
+  #endif
+  
   lcd.init();
   lcd.backlight();
-  Serial.begin(115200);
-  Seq.reset();
+  
+  
+  #if PHMETER
   if (pH.begin()) {                                     
     Serial.println("Loaded EEPROM");
   }
   else {
     Serial.println("Error loading EEPROM");
   }
+  #endif
   #if PERSIT
   peristalticsModule.configInit();
   #endif
@@ -146,6 +182,30 @@ void setup()
   mqttClient.setCallback(MqttModule::callback);  
   #endif
 }
+
+#if ELEC
+void send_a_read(){
+  EC.send_cmd("r");
+  //EC.send_cmd_with_num("T,", 21.0);
+  
+}
+void send_a_read_step2(){
+  EC.receive_cmd(EC_data, 32);
+  EC_str = strtok(EC_data, ",");       //let's parse the string at each comma.
+  TDS = strtok(NULL, ",");
+  EC_float=atof(EC_str);               //convert char to float.
+  TDS_float=atof(TDS);              //convert char to float.
+}
+#endif
+#if PT1000
+void receive_and_print_reading_Temp(){
+  RTD.receive_cmd(RTD_data, 20); 
+  tmp_float = atof(RTD_data); 
+  Serial.print("Temperature: ");
+  Serial.print(tmp_float);
+  Serial.println(" C");
+}
+#endif
 #if TEL
 void send_data(){
   // Verificar si la conexión con el servidor MQTT está activa
@@ -166,8 +226,8 @@ void send_data(){
     previousMillis = currentMillis;
     StaticJsonDocument<200> jsonDocument; 
     jsonDocument["ph"] = ph;
-    jsonDocument["ec"] = EC.get_last_received_reading();
-    jsonDocument["temperatura"] = 0.0;
+    jsonDocument["ec"] = EC_float;
+    jsonDocument["temperatura"] = tmp_float;
     jsonDocument["sensor"] = sensor_id;
 
     // Serializar el JSON en una cadena
@@ -180,11 +240,13 @@ void send_data(){
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString);
     delay(1000);
   }
+  }
+  
   #endif
   
 
   
-}
+
 
 void loop()
 {
@@ -193,7 +255,8 @@ void loop()
 
 }
 
-void parse_cmd(char* string) {                   
+void parse_cmd(char* string) {     
+  #if PHMETER              
   strupr(string);                                
   if (strcmp(string, "CAL,7") == 0) {       
     pH.cal_mid();                                
@@ -211,23 +274,30 @@ void parse_cmd(char* string) {
     pH.cal_clear();                              
     Serial.println("CALIBRATION CLEARED");
   }
+  #endif
 }
 
 void step1(){
-  #if TEL
-  send_data(); // enviar datos para el backend
+  #if PT1000
+  RTD.send_read_cmd();
   #endif
+  #if ELEC
+  send_a_read();
+  #endif
+
   
   lcd.createChar(0, Celsius);
   lcd.createChar(1, smiley);
   lcd.createChar(2, frownie);
   lcd.createChar(3, email);
   lcd.setCursor(0,0);
-  EC.send_cmd_with_num("T,", 25.0);
+  
+  //EC.send_cmd_with_num("T,", 25.0);
+  #if PHMETER
   voltage = pH.read_voltage();
   ph = pH.read_ph(voltage);                      
-  EC.send_read_cmd();
   analog_ph = float(ph);
+  #endif
   if (Serial.available() > 0) {                                                      
     user_bytes_received = Serial.readBytesUntil(13, user_data, sizeof(user_data));   
   }
@@ -241,9 +311,20 @@ void step1(){
 }
 
 void step2(){
+  #if PT1000
+  receive_and_print_reading_Temp();
+  #endif
+  #if PHMETER
   Serial.print("PH: ");
   Serial.println(ph);
-  receive_and_print_reading(EC);             //get the reading from the EC circuit
+  #endif
+  #if ELEC
+  send_a_read_step2();
+  //receive_and_print_reading(EC);             //get the reading from the EC circuit
+  #endif
+    #if TEL
+  send_data(); // enviar datos para el backend
+  #endif
   #if PERSIT
   if (peristalticsModule.estado == false){
   peristalticsModule.acciones("bionovaA", true);
@@ -257,22 +338,30 @@ void step2(){
   // peristalticsModule.acciones("bionovaB",false);
   // peristalticsModule.acciones("phDown", false);
   #endif
+  lcd.setCursor(0,0);
   lcd.print("PH: ");
   lcd.print(ph);
   lcd.setCursor(0,1);
   lcd.print("EC: ");
-  lcd.print(EC.get_last_received_reading());
+  lcd.print(EC_float);
+  
   Serial.println();
-  // Serial.print("TDS: ");
-  // Serial.println(EC.get_last_received_reading());
+  #if ELEC
+  Serial.print("EC: ");
+  Serial.println(EC_float);
+  Serial.print("TDS: ");
+  Serial.println(TDS_float);
+  #endif
+  
   lcd.setCursor(9,0);
   lcd.print("T:");
   lcd.setCursor(11,0);
-  lcd.print("23.0");
+  lcd.print(tmp_float);
   lcd.setCursor(15,0);
   lcd.write(byte(0));
   lcd.setCursor(15,1);
   lcd.write(byte(1));
+  
   
   
 }
