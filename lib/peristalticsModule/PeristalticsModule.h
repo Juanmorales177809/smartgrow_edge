@@ -11,8 +11,8 @@ extern const int phDown;
 class PeristalticsModule {
     public:
     int estado;
-    static void acciones(String accion, bool estado);
-    static void configInit();
+    void acciones(String accion, bool estado);
+    void configInit();
 };
 
 void DownPeristaltic(int pin);
