@@ -6,10 +6,10 @@
 #include <Adafruit_SleepyDog.h> //Include the watchdog library
 
 #define TEL true  // true para enviar datos a servidor, false para no enviar datos
-#define LOCAL true // true para servidor local, false para servidor remoto
+#define LOCAL false // true para servidor local, false para servidor remoto
 #define SENSORID1 true // true para sensor 1, false para sensor 2
 #define SCD4 false // true para sensor SCD40
-#define AS72 true // true para sensor AS7265X
+#define AS72 false // true para sensor AS7265X
 
 #if TEL
 #include "WifiModule.h"
@@ -33,8 +33,10 @@ const char* server = "200.122.207.134"; // IP publica del servidor MQTT
 const int http_port = 8311;
 const int mqtt_port = 8310;
 #endif
+
 WifiModule wifiModule(ssid, password);
 HttpModule httpClient(server, http_port);
+// MqttModule mqttModule(server, mqtt_port);
 
 #endif
 //=======================================================================
@@ -69,6 +71,7 @@ void setup()
   //=======================================================================
    #if TEL
   wifiModule.conectarWifi();
+  // mqttModule.conectarMQTT();
   #endif
 }
 void loop()

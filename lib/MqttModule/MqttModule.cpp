@@ -4,6 +4,10 @@ int var = 0;         // Definir var globalmente
 String resultS = ""; // Definir resultS globalmente
 
 
+// MqttModule::MqttModule(char* server, int port){
+//     this->server = server;
+//     this->port = port;
+// }
 
 void MqttModule::conectarMQTT(PubSubClient &mqttClient, const char *server, int port)
 {
