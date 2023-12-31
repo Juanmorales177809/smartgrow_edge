@@ -13,9 +13,10 @@ class PeristalticsModule {
     int estado;
     void acciones(String accion, bool estado);
     void configInit();
+    void DownPeristaltic(int pin);
+    void UpPeristaltic(int pin);
 };
 
-void DownPeristaltic(int pin);
-void UpPeristaltic(int pin);
+
 
 #endif

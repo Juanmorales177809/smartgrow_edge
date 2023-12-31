@@ -14,6 +14,8 @@ class ControlModule {
     void set_ph(float ph);
     void set_ec(float ec);
     void set_tmp(float tmp);
+    void set_setpoint_ec(float setpoint_ec);
+    void set_setpoint_ph(float setpoint_ph);
     float setpoint_ph;
     float setpoint_ec;
     float tanque;

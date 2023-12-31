@@ -1,8 +1,10 @@
 #include "ControlModule.h"
 #include "PeristalticsModule.h"
 #include "ReadModule.h"
+#include "MqttModule.h"
 
 PeristalticsModule peristalticsModule;
+
 
 
 ControlModule::ControlModule(){
@@ -82,5 +84,13 @@ void ControlModule::set_ec(float ec){
 void ControlModule::set_tmp(float tmp){
     tmp = tmp;
 }
+void ControlModule::set_setpoint_ph(float setpoint_ph){
+    setpoint_ph = setpoint_ph;
+}
+void ControlModule::set_setpoint_ec(float setpoint_ec){
+    setpoint_ec = setpoint_ec;
+}
+
+
 
     

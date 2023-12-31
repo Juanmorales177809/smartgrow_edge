@@ -18,7 +18,7 @@
 #define PHMETER true
 #define DISPLAYS true
 #define PT1000 true
-#define CONTROL false
+#define CONTROL true
 
 #if TEL
 #include <WiFi.h>
@@ -76,6 +76,7 @@ float ec;
 //===============================================================
 #if CONTROL
 ControlModule controlModule;
+bool control_state =  false;
 #endif
 //===============================================================
 uint8_t user_bytes_received = 0;                
@@ -127,7 +128,32 @@ byte email[8] = {
                     0b00000
 };
 
+//===============================================================
+#if CONTROL
+void control(void * parameters){
+  
+  for(;;){
+    if (controlModule.state_ec == false) {
+      Serial.println("Control de EC y PH iniciado");
+      controlModule.set_ec(ec);
+      controlModule.set_ph(ph);
+      controlModule.set_tmp(temp);
+      controlModule.control_ec();
+      
+    }else if (controlModule.state_ec == true && controlModule.state_ph == false) {
+      controlModule.set_ec(ec);
+      controlModule.set_ph(ph);
+      controlModule.set_tmp(temp);
+      controlModule.control_ph();
+    }else if (controlModule.state_ec == true && controlModule.state_ph == true) {
+      Serial.println("Control de EC y PH finalizado");
 
+    }
+    delay(60000);
+    }
+}
+
+    #endif
 void setup()
 {
   //=================================================================
@@ -135,6 +161,10 @@ void setup()
   Wire.begin();
   Seq.reset();
   delay(3000);
+  #if CONTROL
+  xTaskCreate(control, "control", 10000, NULL, 1, NULL);
+  
+  #endif
 //===============================================================
   readModule.tds_activate();
   //=================================================================
@@ -146,6 +176,7 @@ void setup()
   #if CONTROL
   controlModule.setpoint_ph = 5.8;
   controlModule.setpoint_ec = 1000;
+  controlModule.state_ec = false;
   #endif
   //=================================================================
   #if TEL
@@ -200,7 +231,8 @@ void send_data(){
     lcd.setCursor(14,1);
     lcd.write(byte(3));
     HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str(), "phec");
-    MqttModule::enviarMensajeMQTT(mqttClient, jsonString);
+    MqttModule::enviarMensajeMQTT(mqttClient, jsonString,"smartgrow/sensores/phec");
+    MqttModule::enviarMensajeMQTT(mqttClient, "recirculacion_hidroponico","smartgrow/hidroponico/actuadores");
     delay(1000);
   }
   }
@@ -251,31 +283,15 @@ void step2(){
   
     lcd.setCursor(9,0);
     lcd.print("T:");
-    lcd.setCursor(0,11);
+    lcd.setCursor(11,0);
     lcd.print(temp);
     lcd.setCursor(15,0);
     lcd.write(byte(0));
     lcd.setCursor(15,1);
     lcd.write(byte(1));
     
+    // #if CONTROL
+    // control_state = true;
+    // #endif
     //===============================================================
-    #if CONTROL
-    if (controlModule.state_ec == false) {
-      controlModule.set_ec(ec);
-      controlModule.set_ph(ph);
-      controlModule.set_tmp(temp);
-      
-    }else if (controlModule.state_ec == true && controlModule.state_ph == false) {
-      controlModule.set_ec(ec);
-      controlModule.set_ph(ph);
-      controlModule.set_tmp(temp);
-    }else if (controlModule.state_ec == true && controlModule.state_ph == true) {
-      Serial.println("Control de EC y PH finalizado");
-
-    
-    controlModule.control_ec();
-    }
-    #endif
-  
-
 }

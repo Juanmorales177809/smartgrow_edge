@@ -24,11 +24,11 @@ void MqttModule::conectarMQTT(PubSubClient &mqttClient, const char *server, int 
     }
 }
 
-void MqttModule::enviarMensajeMQTT(PubSubClient &mqttClient, const String &mensaje)
+void MqttModule::enviarMensajeMQTT(PubSubClient &mqttClient, const String &mensaje, const char* topic)
 {
     if (mqttClient.connected())
     {
-        mqttClient.publish("smartgrow/sensores/phec", mensaje.c_str());
+        mqttClient.publish(topic, mensaje.c_str());
     }
 }
 

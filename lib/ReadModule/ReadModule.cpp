@@ -40,6 +40,7 @@ void ReadModule::send_a_read_temp(){
 }
 
 float ReadModule::receive_and_print_reading_EC(){
+
     //EC.send_cmd_with_num("T,", 23);
     EC.receive_cmd(EC_data, 32);
     EC_str = strtok(EC_data, ",");       //let's parse the string at each comma.
@@ -53,7 +54,7 @@ float ReadModule::receive_and_print_reading_EC(){
 float ReadModule::receive_and_print_reading_Temp(){
     RTD.receive_cmd(RTD_data, 20); 
     tmp_float = atof(RTD_data);
-    return TDS_float;
+    return tmp_float;
 }
 float ReadModule::receive_and_print_reading_pH(){
 

@@ -31,16 +31,18 @@ void PeristalticsModule::acciones(String accion, bool estado) {
     //Serial.println(msj);
 }
 
-void UpPeristaltic(int pin) {
-    digitalWrite(pin, HIGH);
+void PeristalticsModule::UpPeristaltic(int pin) {
+    digitalWrite(pin, LOW);
     estado = true;
 
     
 }
-void DownPeristaltic(int pin) {
-    digitalWrite(pin, LOW);
+void PeristalticsModule::DownPeristaltic(int pin) {
+    digitalWrite(pin, HIGH);
     estado = false;
 }
+
+
 
 void PeristalticsModule::configInit() {
     pinMode(bionovaA, OUTPUT);
