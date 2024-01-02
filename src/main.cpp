@@ -9,7 +9,7 @@
 
 
 #define LOCAL false
-#define RASPBERRY true
+#define RASPBERRY false
 // WiFi
 #if LOCAL
 const char *ssid = "Convergentes"; // Nombre de la red WiFi

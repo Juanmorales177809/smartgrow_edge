@@ -12,7 +12,7 @@ void MqttModule::conectarMQTT(PubSubClient &mqttClient, const char *server, int 
     while (!mqttClient.connected())
     {
         Serial.print("Intentando conectarse MQTT...");
-        if (mqttClient.connect("arduinoClient"))
+        if (mqttClient.connect("actuadoresClient"))
         {   
             digitalWrite(LED_NOT_CONNECTION, LOW);
             digitalWrite(LED_CONNECTION, HIGH);
