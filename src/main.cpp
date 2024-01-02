@@ -232,7 +232,7 @@ void send_data(){
     lcd.write(byte(3));
     HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str(), "phec");
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString,"smartgrow/sensores/phec");
-    MqttModule::enviarMensajeMQTT(mqttClient, "recirculacion_hidroponico","smartgrow/hidroponico/actuadores");
+    MqttModule::enviarMensajeMQTT(mqttClient, "desague_hidroponico","smartgrow/hidroponico/actuadores");
     delay(1000);
   }
   }
