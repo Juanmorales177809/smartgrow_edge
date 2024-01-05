@@ -16,6 +16,11 @@ class DisplayModule {
     byte smiley[8];
     byte frownie[8];
     byte email[8];
+    byte wifi[8];
+    void clear();
+    void print(String text, int row, int col);
+    
+
 
 
     

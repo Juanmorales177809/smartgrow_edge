@@ -9,6 +9,7 @@
 #include <ReadModule.h>
 #include <ControlModule.h>
 
+
 #include "ph_grav.h"
 
 #define TEL true
@@ -19,7 +20,7 @@
 #define DISPLAYS true
 #define PT1000 true
 #define CONTROL true
-
+//===============================================================
 #if TEL
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -27,6 +28,9 @@
 #include "WiFiModule.h"
 #include "MqttModule.h"
 #include "HttpModule.h"
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+#include <Preferences.h>
 
 //===============================================================
 #if LOCAL
@@ -51,14 +55,15 @@ WiFiClient esp32Client;
 PubSubClient mqttClient(esp32Client);
 String sensorstring = "smartgrow/sensores/";
 const char* sensor_id = "651b3c1a60ccd1c529a301d5"; // ID del sensor
-
 //===============================================================
-const unsigned long interval = 1000; // Intervalo de tiempo en milisegundos (1 min)
+const unsigned long interval = 60000; // Intervalo de tiempo en milisegundos (1 min)
 unsigned long previousMillis = 0;
+//===============================================================
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
+Preferences preferences;
+//===============================================================
 #endif
-//===============================================================
-
-//===============================================================
 //===============================================================
 #define lcd_addr 0x27
 #define lcd_cols 16
@@ -127,65 +132,16 @@ byte email[8] = {
                     0b00100,
                     0b00000
 };
-
-//===============================================================
-#if CONTROL
-void control(void * parameters){
-  
-  for(;;){
-    if (controlModule.state_ec == false) {
-      Serial.println("Control de EC y PH iniciado");
-      controlModule.set_ec(ec);
-      controlModule.set_ph(ph);
-      controlModule.set_tmp(temp);
-      controlModule.control_ec();
-      
-    }else if (controlModule.state_ec == true && controlModule.state_ph == false) {
-      controlModule.set_ec(ec);
-      controlModule.set_ph(ph);
-      controlModule.set_tmp(temp);
-      controlModule.control_ph();
-    }else if (controlModule.state_ec == true && controlModule.state_ph == true) {
-      Serial.println("Control de EC y PH finalizado");
-
-    }
-    delay(60000);
-    }
-}
-
-    #endif
-void setup()
-{
-  //=================================================================
-  Serial.begin(115200);
-  Wire.begin();
-  Seq.reset();
-  delay(3000);
-  #if CONTROL
-  xTaskCreate(control, "control", 10000, NULL, 1, NULL);
-  
-  #endif
-//===============================================================
-  readModule.tds_activate();
-  //=================================================================
-  lcd.init();
-  lcd.backlight();
-  //=================================================================
-  readModule.verifica_ph();
-  //=================================================================
-  #if CONTROL
-  controlModule.setpoint_ph = 5.8;
-  controlModule.setpoint_ec = 1000;
-  controlModule.state_ec = false;
-  #endif
-  //=================================================================
-  #if TEL
-  sensorstring.reserve(30);  
-  WiFiModule::conectarWiFi(ssid, password);
-  mqttClient.setServer(server, mqtt_port);
-  mqttClient.setCallback(MqttModule::callback);  
-  #endif
-}
+byte wifi[8] = {
+0b00000,
+0b00000,
+0b00000,
+0b00000,
+0b00000,
+0b00000,
+0b00000,
+0b11111
+};
 //===============================================================
 void calibrate(){
   if (Serial.available() > 0) {                                                      
@@ -198,6 +154,15 @@ void calibrate(){
     memset(user_data, 0, sizeof(user_data));                                         
   }
   delay(1000);
+}
+void handleRecirculationTopic(const String& topic){
+  MqttModule::enviarMensajeMQTT(mqttClient, topic,"smartgrow/hidroponico/actuadores");
+}
+void handleWaterInletTopic(const String& topic){
+  MqttModule::enviarMensajeMQTT(mqttClient, topic,"smartgrow/hidroponico/actuadores");
+}
+void handleWaterOutletTopic(const String& topic){
+  MqttModule::enviarMensajeMQTT(mqttClient, topic,"smartgrow/hidroponico/actuadores");
 }
 //===============================================================
 #if TEL
@@ -232,13 +197,110 @@ void send_data(){
     lcd.write(byte(3));
     HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str(), "phec");
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString,"smartgrow/sensores/phec");
-    MqttModule::enviarMensajeMQTT(mqttClient, "desague_hidroponico","smartgrow/hidroponico/actuadores");
+    
     delay(1000);
   }
   }
   
   #endif
-  //===============================================================
+//===============================================================
+  void performTask() {
+  // Tu tarea a realizar
+  handleRecirculationTopic("desague_hidroponico");
+  Serial.println("Recirculando el sistema");
+  delay(30000);
+  handleRecirculationTopic("desague_hidroponico");
+  Serial.println("Apagando el sistema");
+  delay(30000);
+}
+//===============================================================
+#if CONTROL
+void control(void * parameters){
+  
+  for(;;){
+    delay(60000);
+    Serial.println("Setpoint EC: " + String(controlModule.setpoint_ec));
+    if (controlModule.state_ec == false) {
+        Serial.println("Control de EC iniciado");
+        controlModule.set_ec(ec);
+        controlModule.set_ph(ph);
+        controlModule.set_tmp(temp);
+        controlModule.control_ec();
+      }else if (controlModule.state_ec == true && controlModule.state_ph == false) {
+        controlModule.set_ec(ec);
+        controlModule.set_ph(ph);
+        controlModule.set_tmp(temp);
+        controlModule.control_ph();
+      }else if (controlModule.state_ec == true && controlModule.state_ph == true) {
+        Serial.println("Control de EC y PH finalizado");
+        lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print("Control completo");
+      }
+    }
+    
+    }
+    #endif
+//===============================================================
+void recirculateWaterDaily(){
+  timeClient.update();
+  long currentTime = timeClient.getEpochTime();
+  long lastExecuted = preferences.getLong("lastExecuted", 0);
+
+  if (currentTime - lastExecuted >= 60) {
+    performTask();
+    preferences.putLong("lastExecuted", currentTime);
+  }
+}
+void setup()
+{
+  //=================================================================
+  Serial.begin(115200);
+  Wire.begin();
+  Seq.reset();
+  delay(3000);
+  #if CONTROL
+  xTaskCreate(control, "control", 10000, NULL, 1, NULL);
+  
+  #endif
+//===============================================================
+  readModule.tds_activate();
+  //=================================================================
+  lcd.init();
+  lcd.backlight();
+  //=================================================================
+  timeClient.setTimeOffset(-5 * 3600);
+  preferences.begin("my-app", false);
+  //=================================================================
+  readModule.verifica_ph();
+  //=================================================================
+  #if CONTROL
+  controlModule.setpoint_ph = 5.8;
+  controlModule.setpoint_ec = 1000;
+  controlModule.state_ec = false;
+  #endif
+  //=================================================================
+  #if TEL
+  sensorstring.reserve(30);  
+  WiFiModule::conectarWiFi(ssid, password);
+  mqttClient.setServer(server, mqtt_port);
+  mqttClient.setCallback(MqttModule::callback);  
+  #endif
+  timeClient.begin();
+  preferences.begin("my-app", false);
+
+  // Obtener la última vez que se ejecutó la tarea
+  long lastExecuted = preferences.getLong("lastExecuted", 0);
+  long currentTime = timeClient.getEpochTime();
+
+  // Verificar si han pasado 24 horas
+  if (currentTime - lastExecuted >= 60) { // 86400 segundos en un día
+    performTask();
+    preferences.putLong("lastExecuted", currentTime);
+  }
+}
+//===============================================================
+
 
 void loop()
 {
@@ -257,6 +319,8 @@ void step1(){
   lcd.setCursor(0,0);
 //===============================================================  
   calibrate();
+  //=================================================================
+  recirculateWaterDaily();
 }
 
 void step2(){
@@ -271,15 +335,17 @@ void step2(){
     lcd.setCursor(0,0);
     lcd.print("PH: ");
     lcd.print(ph);
+    lcd.setCursor(8,0);
+    lcd.print(" ");
     lcd.setCursor(0,1);
     lcd.print("EC: ");
     lcd.print(ec);
     
-    Serial.println();
-    Serial.print("PH: ");
-    Serial.println(ph);
-    Serial.print("EC: ");
-    Serial.println(ec);
+    // Serial.println();
+    // Serial.print("PH: ");
+    // Serial.println(ph);
+    // Serial.print("EC: ");
+    // Serial.println(ec);
   
     lcd.setCursor(9,0);
     lcd.print("T:");

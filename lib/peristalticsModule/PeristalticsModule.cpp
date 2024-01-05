@@ -1,8 +1,8 @@
 #include "PeristalticsModule.h"
 
 const int bionovaA = 33;
-const int bionovaB = 34;
-const int phDown = 35;
+const int bionovaB = 13;
+const int phDown = 12;
 int estado = false;
 
 void PeristalticsModule::acciones(String accion, bool estado) {
@@ -48,4 +48,7 @@ void PeristalticsModule::configInit() {
     pinMode(bionovaA, OUTPUT);
     pinMode(bionovaB, OUTPUT);
     pinMode(phDown, OUTPUT);
+    PeristalticsModule::acciones("bionovaA", false);
+    PeristalticsModule::acciones("bionovaB", false);
+    PeristalticsModule::acciones("phDown", false);
 }

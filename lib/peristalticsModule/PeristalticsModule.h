@@ -15,6 +15,7 @@ class PeristalticsModule {
     void configInit();
     void DownPeristaltic(int pin);
     void UpPeristaltic(int pin);
+    
 };
 
 

@@ -25,6 +25,7 @@ class ControlModule {
     bool cOn;
     bool state_ec;
     bool state_ph;
+    bool ec_bad;
 
 };
 
