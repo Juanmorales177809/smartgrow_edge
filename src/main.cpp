@@ -155,17 +155,19 @@ void calibrate(){
   }
   delay(1000);
 }
-void handleRecirculationTopic(const String& topic){
-  MqttModule::enviarMensajeMQTT(mqttClient, topic,"smartgrow/hidroponico/actuadores");
+void handleRecirculationTopic(){
+  MqttModule::enviarMensajeMQTT(mqttClient, "recirculacion_hidroponico","smartgrow/hidroponico/actuadores");
 }
-void handleWaterInletTopic(const String& topic){
-  MqttModule::enviarMensajeMQTT(mqttClient, topic,"smartgrow/hidroponico/actuadores");
+void handleWaterInletTopic(){
+  MqttModule::enviarMensajeMQTT(mqttClient, "entrada_de_agua_hidroponico","smartgrow/hidroponico/actuadores");
 }
-void handleWaterOutletTopic(const String& topic){
-  MqttModule::enviarMensajeMQTT(mqttClient, topic,"smartgrow/hidroponico/actuadores");
+void handleWaterOutletTopic(){
+  MqttModule::enviarMensajeMQTT(mqttClient, "desague_hidroponico","smartgrow/hidroponico/actuadores");
 }
 //===============================================================
+
 #if TEL
+
 void send_data(){
   // Verificar si la conexión con el servidor MQTT está activa
   if (!mqttClient.connected()) {//
@@ -192,9 +194,9 @@ void send_data(){
     // Serializar el JSON en una cadena
     String jsonString;
     serializeJson(jsonDocument, jsonString);
-    Serial.println(jsonString);
+    //Serial.println(jsonString);
     lcd.setCursor(14,1);
-    lcd.write(byte(3));
+    lcd.write(byte(5));
     HttpModule::enviarDatosHTTP(server, http_port, jsonString.c_str(), "phec");
     MqttModule::enviarMensajeMQTT(mqttClient, jsonString,"smartgrow/sensores/phec");
     
@@ -206,19 +208,34 @@ void send_data(){
 //===============================================================
   void performTask() {
   // Tu tarea a realizar
-  handleRecirculationTopic("desague_hidroponico");
+  handleRecirculationTopic();
   Serial.println("Recirculando el sistema");
   delay(30000);
-  handleRecirculationTopic("desague_hidroponico");
+  handleRecirculationTopic();
   Serial.println("Apagando el sistema");
   delay(30000);
+}
+//===============================================================
+void recirculateWaterDaily(){
+  timeClient.update();
+  long currentTime = timeClient.getEpochTime();
+  long lastExecuted = preferences.getLong("lastExecuted", 0);
+
+  if (currentTime - lastExecuted >= 840000) {
+    performTask();
+    preferences.putLong("lastExecuted", currentTime);
+    Serial.println("Recirculando el sistema");
+  }
 }
 //===============================================================
 #if CONTROL
 void control(void * parameters){
   
   for(;;){
-    delay(60000);
+    if (controlModule.ec_bad == true) {
+      handleWaterInletTopic();
+    }else{
+      delay(90000);
     Serial.println("Setpoint EC: " + String(controlModule.setpoint_ec));
     if (controlModule.state_ec == false) {
         Serial.println("Control de EC iniciado");
@@ -235,23 +252,16 @@ void control(void * parameters){
         Serial.println("Control de EC y PH finalizado");
         lcd.clear();
         lcd.setCursor(0,0);
-        lcd.print("Control completo");
+        lcd.println("Control completo");
+        recirculateWaterDaily();
+        
       }
     }
     
     }
+}
     #endif
 //===============================================================
-void recirculateWaterDaily(){
-  timeClient.update();
-  long currentTime = timeClient.getEpochTime();
-  long lastExecuted = preferences.getLong("lastExecuted", 0);
-
-  if (currentTime - lastExecuted >= 60) {
-    performTask();
-    preferences.putLong("lastExecuted", currentTime);
-  }
-}
 void setup()
 {
   //=================================================================
@@ -316,6 +326,7 @@ void step1(){
   lcd.createChar(1, smiley);
   lcd.createChar(2, frownie);
   lcd.createChar(3, email);
+  lcd.createChar(4, wifi);
   lcd.setCursor(0,0);
 //===============================================================  
   calibrate();

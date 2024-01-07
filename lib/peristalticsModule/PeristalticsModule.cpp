@@ -2,7 +2,7 @@
 
 const int bionovaA = 33;
 const int bionovaB = 13;
-const int phDown = 12;
+const int phDown = 15;
 int estado = false;
 
 void PeristalticsModule::acciones(String accion, bool estado) {

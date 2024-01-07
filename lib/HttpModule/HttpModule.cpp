@@ -25,6 +25,7 @@ void estructuraHttp(String server, const int http_port, String path, String tipo
         httpCode = http.POST(jsonString);
     }
     String payload = http.getString();
+    Serial.print("Respuesta: ");
     Serial.println(httpCode);
     Serial.println(payload);
     http.end();
