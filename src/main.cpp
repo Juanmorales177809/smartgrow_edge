@@ -41,6 +41,7 @@ const int http_port2 = 3000;
 WifiModule wifiModule(ssid, password);
 HttpModule httpClient(server, http_port);
 
+
 #endif
 //=======================================================================
 #if SENSORID1
@@ -104,7 +105,7 @@ void loop()
     #if AS72
     String jsonString2 = AS7265X.buildJson();
     httpClient.enviarDatosHTTP(jsonString2.c_str(), "as7265x");
-    httpClient2.enviarDatosHTTP(jsonString2.c_str(), "as7265x");
+    //httpClient2.enviarDatosHTTP(jsonString2.c_str(), "as7265x");
     #endif
     delay(1000);
     #endif
