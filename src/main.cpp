@@ -34,11 +34,11 @@ String resultS = "";
 
 void acciones(String mensaje)
 {
-  if (mensaje == "entrada_de_agua_hidroponico_prueba")
+  if (mensaje == "entrada_de_agua_hidroponico")
   {
     ActuadoresModule::ToggleActuador(ENTRADA_HIDROPONICO, "65999eeb0a40e026b2620ffa");
   }
-  else if (mensaje == "desague_hidroponico_prueba")
+  else if (mensaje == "desague_hidroponico")
   {
     if (digitalRead(RECIRCULACION_HIDROPONICO) == HIGH)
     {
@@ -50,7 +50,7 @@ void acciones(String mensaje)
       Serial.println("No se puede desaguar si esta activa la recirculacion");
     }
   }
-  else if (mensaje == "recirculacion_hidroponico_prueba")
+  else if (mensaje == "recirculacion_hidroponico")
   {
     if (digitalRead(DESAGUE_HIDROPONICO) == LOW)
     {
