@@ -13,9 +13,9 @@ class ActuadoresModule
 public:
     static void acciones(String mensaje);
     static void configInit();
+    static void ToggleActuador(int actuador, const char *id);
 };
 
-void ToggleActuador(int actuador, const char *id);
 void updateActuadores(const char *id, bool estado);
 
 #endif
