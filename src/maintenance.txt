@@ -1,0 +1,33 @@
+//Codigo para el mantenimiento de las bombas peristalticas
+//Smartgrow
+
+#include <Arduino.h>
+
+
+const int relePin1 = 15;
+const int relePin2 = 33;
+const int relePin3 = 13;
+
+
+void setup() {
+  // Inicializa el pin del relé como salida
+  pinMode(relePin1, OUTPUT);
+  pinMode(relePin2, OUTPUT);
+  pinMode(relePin3, OUTPUT);
+
+}
+
+void loop() {
+  // Activa el relé
+  digitalWrite(relePin1, HIGH); // Cambia a LOW si tu relé se activa con nivel bajo
+  digitalWrite(relePin2, HIGH);
+  digitalWrite(relePin3, HIGH);
+  delay(1000); // Espera un segundo
+
+  // Desactiva el relé
+  digitalWrite(relePin1, LOW); // Cambia a HIGH si tu relé se desactiva con nivel alto
+  digitalWrite(relePin2, LOW);
+  digitalWrite(relePin3, LOW);
+  delay(1000); // Espera un segundo
+}
+
