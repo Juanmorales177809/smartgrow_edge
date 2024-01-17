@@ -21,9 +21,10 @@ void InfluxDBModule::setField(String field, float value, Point& sensor){
     sensor.clearFields();
     sensor.addField(field, value);
 }
-void InfluxDBModule::setDevice(String device, Point& sensor, String place){
+Point InfluxDBModule::setDevice(String device, Point& sensor, String place){
     sensor.addTag("device", device);
     sensor.addTag("SSID", place);
+    return sensor;
 }
 void InfluxDBModule::senDataInfluxDB(InfluxDBClient &client, Point& sensor){
     if (!client.writePoint(sensor)) {

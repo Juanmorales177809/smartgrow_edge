@@ -10,7 +10,7 @@ class InfluxDBModule {
     public:
     void checkInfluxDB(InfluxDBClient &client);
     void setField(String field, float value, Point& sensor);
-    void setDevice(String device, Point& sensor,  String place);
+    Point setDevice(String device, Point& sensor,  String place);
     void senDataInfluxDB(InfluxDBClient &client, Point& sensor);
    
 

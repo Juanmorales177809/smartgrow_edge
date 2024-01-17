@@ -1,18 +1,29 @@
 #include <Arduino.h> //Required for Visual Studio Code
-#include "SCD40Sensor.h"
-#include "AS7265xModule.h"
-#include "BME680Module.h"
-
 #include <Wire.h> //Include the I2C library
 #include <Adafruit_SleepyDog.h> //Include the watchdog library
 
 #define TEL true  // true para enviar datos a servidor, false para no enviar datos
 #define LOCAL false // true para servidor local, false para servidor remoto
-#define SENSORID1 false // true para sensor 1, false para sensor 2
+#define SENSORID1 true // true para sensor 1, false para sensor 2
 #define SCD4 true // true para sensor SCD40
-#define AS72 true // true para sensor AS7265X
-#define BME true // true para sensor BME680
+#define AS72 false // true para sensor AS7265X
+#define BME false // true para sensor BME680
+#define INFLUX true // true para enviar datos a InfluxDB, false para no enviar datos
 
+#if SCD4
+#include "SCD40Sensor.h"
+#endif
+#if AS72
+#include "AS7265xModule.h"
+#endif
+#if BME
+#include "BME680Module.h"
+#endif
+#if INFLUX
+#include <InfluxDbClient.h>
+#include <InfluxDbCloud.h>
+#include <InfluxDBModule.h>
+#endif
 #if TEL
 #include "WifiModule.h"
 #include "MqttModule.h"
@@ -44,6 +55,17 @@ WifiModule wifiModule(ssid, password);
 HttpModule httpClient(server, http_port);
 HttpModule httpClient2(server2, http_port2);
 
+#if INFLUX
+#define INFLUXDB_URL "http://192.168.1.112:8086"
+#define INFLUXDB_TOKEN "0Bj1esp9j4XtElS_cbQSBE7Sqk9VGS3NVpimrwhj-zTxzTsjKoOaK_3F2HX1QVjFUyFbJJUzzVbJVYTgwjW7GQ=="
+#define INFLUXDB_ORG "47212db92d0632e6"
+#define INFLUXDB_BUCKET "canna-wheater"
+#define DEVICE "650dc7d640e0be7842fc4239"
+#define TZ_INFO "UTC-5"
+InfluxDBClient Influxclient(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN, InfluxDbCloud2CACert);
+InfluxDBModule influxDBModule;
+Point sensor("SCD40");
+#endif
 
 #endif
 //=======================================================================
@@ -68,14 +90,14 @@ AS7265xModule module(sensor_id2);
 BME680Module bme680(sensor_id3);
 #endif
 //=======================================================================
-const unsigned long interval = 30000; // Intervalo de tiempo en milisegundos (2.5 min)
+const unsigned long interval = 30000; // Intervalo de tiempo en milisegundos (0.5 min)
 unsigned long previousMillis = 0;
 //=======================================================================
 
 
 void setup()
 {
-  Watchdog.enable(400000);
+  Watchdog.enable(180000);
   Serial.begin(115200);
   #if SCD4
   Wire.begin();
@@ -91,6 +113,11 @@ void setup()
     #if TEL
   wifiModule.conectarWifi();
   // mqttModule.conectarMQTT();
+  #endif
+  #if INFLUX
+  influxDBModule.checkInfluxDB(Influxclient);
+  sensor.addTag("device", DEVICE);
+  sensor.addTag("SSID", ssid);
   #endif
 }
 
@@ -128,8 +155,30 @@ void loop()
     #endif
     delay(1000);
     #endif
-    Watchdog.reset();
+    #if INFLUX
+    #if SCD4
+    const float* co2 = SCD40.getCo2();
+    const float* temperature = SCD40.getTemperatura();
+    const float* humidity = SCD40.getHumedad();
+    const float* VPD = SCD40.getVPD();
+    sensor.clearFields();
+    sensor.addField("co2_value", *co2);
+    sensor.addField("temperature_value", *temperature);
+    sensor.addField("humidity_value", *humidity);
+    sensor.addField("VPD_value", *VPD);
+    Serial.println(sensor.toLineProtocol());
+    if (!Influxclient.writePoint(sensor)) {
+      Serial.print("InfluxDB write failed: ");
+      Serial.println(Influxclient.getLastErrorMessage());
+    }
+    else{
+        Serial.println("InfluxDB write success");
+    }
+    #endif
+    #endif
+    
 
 }
+Watchdog.reset();
 }
 
