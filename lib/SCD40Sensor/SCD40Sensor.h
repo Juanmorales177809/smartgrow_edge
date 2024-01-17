@@ -18,6 +18,11 @@ class SCD40Sensor {
         const char* getId() const;
         void read();
         const String buildJson();
+        void setTemperatura(float temperatura);
+        void setHumedad(float humedad);
+        void setCo2(float co2);
+        void setVPD(float VPD);
+        
     private:
         const char* id;
         float temperatura;

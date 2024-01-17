@@ -4,10 +4,10 @@
 
 //hacer un constructor con todos los canales del sensor AS7265X
 
-
-void AS7265xModule::Read()
-{
-    
+AS7265xModule::AS7265xModule(const char* id)
+{   
+    AS7265X sensor;
+    this->id = id;
     float A = 0.0f; //410nm
     float B = 0.0f; //435nm
     float C = 0.0f; //460nm
@@ -26,6 +26,59 @@ void AS7265xModule::Read()
     float W = 0.0f; //860nm
     float K = 0.0f; //900nm
     float L = 0.0f; //
+}
+
+void AS7265xModule::begin()
+{
+    if (sensor.begin() == false)
+    {
+        Serial.println("Intentando encontrar AS7265X");
+        delay(10000);
+        if (sensor.begin() == false)
+        {
+            Serial.println("No se pudo encontrar el sensor AS7265X");
+        
+        }
+        else
+        {
+            Serial.println("Sensor AS7265X encontrado");
+        }
+    }else{
+        Serial.println("Sensor AS7265X encontrado");
+    }
+}
+void AS7265xModule::setGain(const char* gain, const int integration){
+    if (gain == "1X")
+    {
+        sensor.setGain(AS7265X_GAIN_1X);
+    }
+    else if (gain == "37X")
+    {
+        sensor.setGain(AS7265X_GAIN_37X);
+    }
+    else if (gain == "16X")
+    {
+        sensor.setGain(AS7265X_GAIN_16X);
+    }
+    else if (gain == "64X")
+    {
+        sensor.setGain(AS7265X_GAIN_64X);
+    }
+    else
+    {
+        Serial.println("Default gain 1X");
+    }
+    //Integration cycles is from 0 (2.78ms) to 255 (711ms) in steps of 2.78ms
+    sensor.setIntegrationCycles(integration); //Default 50*2.8ms = 140ms per reading
+
+}
+
+
+
+void AS7265xModule::Read()
+{
+    
+
     sensor.takeMeasurements();
 
     this->A = sensor.getCalibratedA();
@@ -90,6 +143,7 @@ void AS7265xModule::Read()
 
 
 
+
 }     
 
 const String AS7265xModule::buildJson()
@@ -113,48 +167,13 @@ const String AS7265xModule::buildJson()
     jsonDocument["W"] = this->W;
     jsonDocument["K"] = this->K;
     jsonDocument["L"] = this->L;
+    jsonDocument["sensor"] = this->id;
     String jsonString;
     serializeJson(jsonDocument, jsonString);
     return jsonString;
 }
 
-AS7265xModule::AS7265xModule(const char* id)
-{
-    this->id = id;
-}
 
-void AS7265xModule::begin(const char* gain, const int integration)
-{
-    if (sensor.begin() == false)
-    {
-        Serial.println("No se pudo encontrar el sensor AS7265X");
-        while (1)
-            ;
-    }
-    if (gain == "1X")
-    {
-        sensor.setGain(AS7265X_GAIN_1X);
-    }
-    else if (gain == "37X")
-    {
-        sensor.setGain(AS7265X_GAIN_37X);
-    }
-    else if (gain == "16X")
-    {
-        sensor.setGain(AS7265X_GAIN_16X);
-    }
-    else if (gain == "64X")
-    {
-        sensor.setGain(AS7265X_GAIN_64X);
-    }
-    else
-    {
-        Serial.println("Default gain 1X");
-    }
-    //Integration cycles is from 0 (2.78ms) to 255 (711ms) in steps of 2.78ms
-    sensor.setIntegrationCycles(integration); //Default 50*2.8ms = 140ms per reading
-
-}
 
     
 

@@ -1,7 +1,7 @@
 #include <Arduino.h> //Required for Visual Studio Code
 #include "SCD40Sensor.h"
 #include "AS7265xModule.h"
-#include "BME680Module.h"
+#include "SparkFun_AS7265X.h"
 
 #include <Wire.h> //Include the I2C library
 #include <Adafruit_SleepyDog.h> //Include the watchdog library
@@ -11,7 +11,6 @@
 #define SENSORID1 false // true para sensor 1, false para sensor 2
 #define SCD4 true // true para sensor SCD40
 #define AS72 true // true para sensor AS7265X
-#define BME true // true para sensor BME680
 
 #if TEL
 #include "WifiModule.h"
@@ -55,24 +54,19 @@ const char* sensor_id = "65391fa4700d51b6d681b3c5"; // ID del sensor SCD40_2
 #if AS72
 const char* sensor_id2 = "655dd4a264d0cd6c1628e4b3"; // ID del sensor AS7265X
 #endif
-#if BME
-const char* sensor_id3 = "655dd4a264d0cd6c1628e4b3"; // ID del sensor BME680
-#endif
 #if SCD4
+
 SCD40Sensor SCD40(sensor_id);
 #endif
 #if AS72
-AS7265xModule module(sensor_id2);
-#endif
-#if BME
-BME680Module bme680(sensor_id3);
+AS7265X sensor;
+AS7265xModule AS7265Xmodule(sensor_id2);
+
 #endif
 //=======================================================================
 const unsigned long interval = 30000; // Intervalo de tiempo en milisegundos (2.5 min)
 unsigned long previousMillis = 0;
 //=======================================================================
-
-
 void setup()
 {
   Watchdog.enable(400000);
@@ -82,20 +76,26 @@ void setup()
   SCD40.begin(Wire);
   #endif
   #if AS72
-    module.begin();
-    module.setGain("1X", 50);
+  Serial.println("AS7265x Example");
+  if (sensor.begin() == false)
+  {
+    Serial.println("No se pudo encontrar el sensor AS7265X");
+  }
+  else
+  {
+    Serial.println("Sensor AS7265X encontrado");
+  }
   #endif
-  #if BME
-    bme680.begin();
-  #endif
-    #if TEL
+  //=======================================================================
+   #if TEL
   wifiModule.conectarWifi();
   // mqttModule.conectarMQTT();
   #endif
 }
-
 void loop()
 {
+  //=======================================================================
+
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval)
   {
@@ -104,14 +104,7 @@ void loop()
     SCD40.read();
     #endif
     #if AS72
-    module.Read();
-    delay(1000);
-    Serial.println(module.buildJson());
-    #endif
-    #if BME
-    bme680.Read();
-    delay(1000);
-    Serial.println(bme680.buildJson());
+    AS7265Xmodule.Read(sensor);
     #endif
     #if TEL
     #if SCD4
@@ -122,14 +115,12 @@ void loop()
     Serial.println("Enviando datos a servidor local");
     #endif
     #if AS72
-    String jsonString2 = module.buildJson();
+    String jsonString2 = AS7265Xmodule.buildJson();
     httpClient.enviarDatosHTTP(jsonString2.c_str(), "as7265x");
     //httpClient2.enviarDatosHTTP(jsonString2.c_str(), "as7265x");
     #endif
     delay(1000);
     #endif
     Watchdog.reset();
-
+  }
 }
-}
-

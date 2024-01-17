@@ -38,7 +38,8 @@ const String SCD40Sensor::buildJson()
 
 float SCD40Sensor::calcularVPD(float temperatura, float humedad)
 {
-    VPD = 0.611 * exp((17.27 * temperatura) / (temperatura + 237.3)) - (humedad / 100) * 0.611 * exp((17.27 * temperatura) / (temperatura + 237.3)); //Calculo de VPD  con la formula de Buck 1996 (https://es.wikipedia.org/wiki/Presi%C3%B3n_de_vapor_de_agua)
+    VPD = 0.611 * exp((17.27 * temperatura) / (temperatura + 237.3)) * (1-(humedad/100)); //Calculo de VPD  con la formula de Buck 1996 
+    
     return VPD;
 
 }
@@ -52,6 +53,26 @@ void SCD40Sensor::begin(TwoWire &wire)
 {
     mySensor.begin(wire);
     mySensor.startPeriodicMeasurement();
+}
+
+void SCD40Sensor::setTemperatura(float temperatura)
+{
+    this->temperatura = temperatura;
+}
+
+void SCD40Sensor::setHumedad(float humedad)
+{
+    this->humedad = humedad;
+}
+
+void SCD40Sensor::setVPD(float VPD)
+{
+    this->VPD = VPD;
+}
+
+void SCD40Sensor::setCo2(float co2)
+{
+    this->co2 = co2;
 }
 
 const float* SCD40Sensor::getTemperatura() const

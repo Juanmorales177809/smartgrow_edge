@@ -3,12 +3,6 @@
 int var = 0;         // Definir var globalmente
 String resultS = ""; // Definir resultS globalmente
 
-
-// MqttModule::MqttModule(char* server, int port){
-//     this->server = server;
-//     this->port = port;
-// }
-
 void MqttModule::conectarMQTT(PubSubClient &mqttClient, const char *server, int port)
 {
     while (!mqttClient.connected())
@@ -17,6 +11,7 @@ void MqttModule::conectarMQTT(PubSubClient &mqttClient, const char *server, int 
         if (mqttClient.connect("arduinoClient"))
         {
             Serial.println("Conectado");
+
             mqttClient.subscribe("smartgrow");
         }
         else
@@ -29,11 +24,11 @@ void MqttModule::conectarMQTT(PubSubClient &mqttClient, const char *server, int 
     }
 }
 
-void MqttModule::enviarMensajeMQTT(PubSubClient &mqttClient, const String &mensaje, const String &topic)
+void MqttModule::enviarMensajeMQTT(PubSubClient &mqttClient, const String &mensaje, const char* topic)
 {
     if (mqttClient.connected())
     {
-        mqttClient.publish(topic.c_str(), mensaje.c_str());
+        mqttClient.publish(topic, mensaje.c_str());
     }
 }
 

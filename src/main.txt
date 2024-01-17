@@ -1,0 +1,19 @@
+
+
+#include "BME680Module.h"
+#include <Arduino.h>
+
+
+
+BME680Module sensor("BME680");
+
+
+void setup() {
+    Serial.begin(115200);
+    sensor.begin();
+}
+
+void loop() {
+    sensor.Read();
+    delay(1000);
+}

@@ -6,13 +6,15 @@
 #include "SparkFun_AS7265X.h"
 
 
+
 class AS7265xModule {
 public:
     AS7265xModule(const char* id);
+    void begin();
     void Read();
-    void begin(const char* gain, const int integration);
+    void setGain(const char* gain, const int integration);
     const String buildJson();
-private:
+
     const char* id;
     float A;
     float B;
@@ -33,7 +35,7 @@ private:
     float K;
     float L;
     AS7265X sensor;
-    StaticJsonDocument<200> jsonDocument;
+    StaticJsonDocument<400> jsonDocument;
     
     
 };
