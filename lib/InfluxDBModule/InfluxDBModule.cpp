@@ -1,11 +1,7 @@
 #include <InfluxDBModule.h>
-
-
 #include <Arduino.h>
 #include <InfluxDbClient.h>
 #include <InfluxDbCloud.h>
-
-
 
 void InfluxDBModule::checkInfluxDB(InfluxDBClient &client)
 {
@@ -36,11 +32,3 @@ void InfluxDBModule::senDataInfluxDB(InfluxDBClient &client, Point& sensor){
     }
 
 }
-
-
-
-
-
-
-
-

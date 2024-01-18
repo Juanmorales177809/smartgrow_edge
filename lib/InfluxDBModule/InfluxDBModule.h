@@ -1,10 +1,7 @@
 #ifndef InfluxDBModule_h
 #define InfluxDBModule_h
-
 #include <InfluxDbClient.h>
 #include <InfluxDbCloud.h>
-
-
 
 class InfluxDBModule {
     public:
@@ -19,5 +16,3 @@ class InfluxDBModule {
 };
 
 #endif
-
-

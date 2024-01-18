@@ -38,6 +38,10 @@ const String SCD40Sensor::buildJson()
 
 float SCD40Sensor::calcularVPD(float temperatura, float humedad)
 {
+    if (temperatura == 0.0f || humedad == 0.0f)
+    {
+        return 0.0f;
+    }
     VPD = 0.611 * exp((17.27 * temperatura) / (temperatura + 237.3)) * (1-(humedad/100)); //Calculo de VPD  con la formula de Buck 1996 
     
     return VPD;
