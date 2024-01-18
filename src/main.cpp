@@ -6,8 +6,8 @@
 #define LOCAL false // true para servidor local, false para servidor remoto
 #define SENSORID1 true // true para sensor 1, false para sensor 2
 #define SCD4 true // true para sensor SCD40
-#define AS72 false // true para sensor AS7265X
-#define BME false // true para sensor BME680
+#define AS72 true // true para sensor AS7265X
+#define BME true // true para sensor BME680
 #define INFLUX true // true para enviar datos a InfluxDB, false para no enviar datos
 
 #if SCD4
@@ -60,11 +60,17 @@ HttpModule httpClient2(server2, http_port2);
 #define INFLUXDB_TOKEN "0Bj1esp9j4XtElS_cbQSBE7Sqk9VGS3NVpimrwhj-zTxzTsjKoOaK_3F2HX1QVjFUyFbJJUzzVbJVYTgwjW7GQ=="
 #define INFLUXDB_ORG "47212db92d0632e6"
 #define INFLUXDB_BUCKET "canna-wheater"
+#define INFLUXDB_BUCKET2 "canna-lights"
 #define DEVICE "650dc7d640e0be7842fc4239"
 #define TZ_INFO "UTC-5"
+#define DEVICE_BME "651203198748ed5dd33b6d2e"
+#define DEVICE_AS "655dd4a264d0cd6c1628e4b3"
 InfluxDBClient Influxclient(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN, InfluxDbCloud2CACert);
+InfluxDBClient Influxclient2(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET2, INFLUXDB_TOKEN, InfluxDbCloud2CACert);
 InfluxDBModule influxDBModule;
 Point sensor("SCD40");
+Point sensor1("AS7265X");
+Point sensor2("BME680");
 #endif
 
 #endif
@@ -78,7 +84,7 @@ const char* sensor_id = "65391fa4700d51b6d681b3c5"; // ID del sensor SCD40_2
 const char* sensor_id2 = "655dd4a264d0cd6c1628e4b3"; // ID del sensor AS7265X
 #endif
 #if BME
-const char* sensor_id3 = "655dd4a264d0cd6c1628e4b3"; // ID del sensor BME680
+const char* sensor_id3 = "651203198748ed5dd33b6d2e"; // ID del sensor BME680
 #endif
 #if SCD4
 SCD40Sensor SCD40(sensor_id);
@@ -93,8 +99,42 @@ BME680Module bme680(sensor_id3);
 const unsigned long interval = 30000; // Intervalo de tiempo en milisegundos (0.5 min)
 unsigned long previousMillis = 0;
 //=======================================================================
-
-
+#if AS72
+void sendDataAS7265XToInflux(){
+  DynamicJsonDocument doc(1024);
+  deserializeJson(doc, module.buildJson());
+  sensor1.clearFields();
+  for (JsonPair kv : doc.as<JsonObject>()) {
+    sensor1.addField(kv.key().c_str(), kv.value().as<float>());
+  }
+  Serial.println(sensor1.toLineProtocol());
+  if (!Influxclient2.writePoint(sensor1)) {
+    Serial.print("InfluxDB write failed: ");
+    Serial.println(Influxclient2.getLastErrorMessage());
+  }
+  else{
+      Serial.println("InfluxDB write success");
+  }
+}
+#endif
+#if BME
+void sendDataBME680ToInflux(){
+  DynamicJsonDocument doc(1024);
+  deserializeJson(doc, bme680.buildJson());
+  sensor2.clearFields();
+  for (JsonPair kv : doc.as<JsonObject>()) {
+    sensor2.addField(kv.key().c_str(), kv.value().as<float>());
+  }
+  Serial.println(sensor2.toLineProtocol());
+  if (!Influxclient.writePoint(sensor2)) {
+    Serial.print("InfluxDB write failed: ");
+    Serial.println(Influxclient.getLastErrorMessage());
+  }
+  else{
+      Serial.println("InfluxDB write success");
+  }
+}
+#endif
 void setup()
 {
   Watchdog.enable(180000);
@@ -118,6 +158,14 @@ void setup()
   influxDBModule.checkInfluxDB(Influxclient);
   sensor.addTag("device", DEVICE);
   sensor.addTag("SSID", ssid);
+  #if AS72
+  sensor1.addTag("device", DEVICE_AS);
+  sensor1.addTag("SSID", ssid);
+  #endif
+  #if BME
+  sensor2.addTag("device", DEVICE_BME);
+  sensor2.addTag("SSID", ssid);
+  #endif
   #endif
 }
 
@@ -153,8 +201,6 @@ void loop()
     httpClient.enviarDatosHTTP(jsonString2.c_str(), "as7265x");
     //httpClient2.enviarDatosHTTP(jsonString2.c_str(), "as7265x");
     #endif
-    delay(1000);
-    #endif
     #if INFLUX
     #if SCD4
     const float* co2 = SCD40.getCo2();
@@ -174,6 +220,13 @@ void loop()
     else{
         Serial.println("InfluxDB write success");
     }
+    #endif
+    #if AS72
+    sendDataAS7265XToInflux();
+    #endif
+    #if BME
+    sendDataBME680ToInflux();
+    #endif
     #endif
     #endif
     
