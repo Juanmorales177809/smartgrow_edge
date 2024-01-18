@@ -20,6 +20,7 @@
 #define DISPLAYS true
 #define PT1000 true
 #define CONTROL true
+#define INFLUX true
 //===============================================================
 #if TEL
 #include <WiFi.h>
@@ -31,6 +32,10 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <Preferences.h>
+#if INFLUX
+#include <InfluxDbClient.h>
+#include <InfluxDbCloud.h>
+#endif
 
 //===============================================================
 #if LOCAL
@@ -62,6 +67,17 @@ unsigned long previousMillis = 0;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
 Preferences preferences;
+//===============================================================
+#if INFLUX
+#define INFLUXDB_URL "http://192.168.1.112:8086"
+#define INFLUXDB_TOKEN "0Bj1esp9j4XtElS_cbQSBE7Sqk9VGS3NVpimrwhj-zTxzTsjKoOaK_3F2HX1QVjFUyFbJJUzzVbJVYTgwjW7GQ=="
+#define INFLUXDB_ORG "47212db92d0632e6"
+#define INFLUXDB_BUCKET "canna-hidro"
+#define DEVICE "651b3c1a60ccd1c529a301d5"
+#define TZ_INFO "UTC-5"
+InfluxDBClient Influxclient(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN, InfluxDbCloud2CACert);
+Point sensor("phec");
+#endif
 //===============================================================
 #endif
 //===============================================================
@@ -203,7 +219,31 @@ void send_data(){
     delay(1000);
   }
   }
-  
+  #if INFLUX
+  void checkInfluxDB(){
+  // Verificar si la conexión con el servidor MQTT está activa
+  if (!mqttClient.connected()) {//
+    lcd.setCursor(15,1);
+    lcd.write(byte(2));
+    lcd.setCursor(0,1);
+    MqttModule::conectarMQTT(mqttClient, server, mqtt_port);
+  }
+  }
+  void send_data_influx(){
+    sensor.clearFields();
+    sensor.addField("ph", ph);
+    sensor.addField("ec", ec);
+    sensor.addField("temperatura", temp);
+    Serial.println(sensor.toLineProtocol());
+    if (!Influxclient.writePoint(sensor)) {
+      Serial.print("InfluxDB write failed: ");
+      Serial.println(Influxclient.getLastErrorMessage());
+    }else{
+      Serial.println("InfluxDB write success");
+    }
+  }
+  #endif
+//===============================================================  
   #endif
 //===============================================================
   void performTask() {
@@ -308,6 +348,11 @@ void setup()
     performTask();
     preferences.putLong("lastExecuted", currentTime);
   }
+  #if INFLUX
+  checkInfluxDB();
+  sensor.addTag("device", DEVICE);
+  sensor.addTag("SSID", ssid);
+  #endif
 }
 //===============================================================
 
@@ -342,7 +387,9 @@ void step2(){
     #if TEL
     send_data(); // enviar datos para el backend
     #endif
-
+    #if INFLUX
+    send_data_influx();
+    #endif
     lcd.setCursor(0,0);
     lcd.print("PH: ");
     lcd.print(ph);
