@@ -272,10 +272,8 @@ void recirculateWaterDaily(){
 void control(void * parameters){
   
   for(;;){
-    if (controlModule.ec_bad == true) {
-      handleWaterInletTopic();
-    }else{
-      delay(90000);
+    
+      
     Serial.println("Setpoint EC: " + String(controlModule.setpoint_ec));
     if (controlModule.state_ec == false) {
         Serial.println("Control de EC iniciado");
@@ -283,23 +281,24 @@ void control(void * parameters){
         controlModule.set_ph(ph);
         controlModule.set_tmp(temp);
         controlModule.control_ec();
+        delay(90000);
       }else if (controlModule.state_ec == true && controlModule.state_ph == false) {
         controlModule.set_ec(ec);
         controlModule.set_ph(ph);
         controlModule.set_tmp(temp);
         controlModule.control_ph();
+        delay(90000);
       }else if (controlModule.state_ec == true && controlModule.state_ph == true) {
         Serial.println("Control de EC y PH finalizado");
         lcd.clear();
         lcd.setCursor(0,0);
         lcd.println("Control completo");
-        recirculateWaterDaily();
         
       }
     }
     
     }
-}
+
     #endif
 //===============================================================
 void setup()

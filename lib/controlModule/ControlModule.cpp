@@ -18,6 +18,7 @@ ControlModule::ControlModule(){
     bool state_ec = false;
     bool state_ph = false;
     bool ec_bad = false;
+    bool ph_bad = false;
     
 
 }
