@@ -47,7 +47,7 @@ const char *password = "2205631700"; // Contraseña de la red WiFi
 #endif
 //===============================================================
 #if LOCAL
-const char* server = "172.16.20.94";
+const char* server = "192.168.1.112";
 const int mqtt_port = 1883;
 const int http_port = 3000;
 #else
@@ -234,7 +234,7 @@ void send_data(){
     sensor.addField("ph", ph);
     sensor.addField("ec", ec);
     sensor.addField("temperatura", temp);
-    Serial.println(sensor.toLineProtocol());
+    //Serial.println(sensor.toLineProtocol());
     if (!Influxclient.writePoint(sensor)) {
       Serial.print("InfluxDB write failed: ");
       Serial.println(Influxclient.getLastErrorMessage());
@@ -283,11 +283,9 @@ void control(void * parameters){
         controlModule.control_ec();
         delay(90000);
       }else if (controlModule.state_ec == true && controlModule.state_ph == false) {
-        controlModule.set_ec(ec);
         controlModule.set_ph(ph);
-        controlModule.set_tmp(temp);
         controlModule.control_ph();
-        delay(90000);
+        delay(600000);
       }else if (controlModule.state_ec == true && controlModule.state_ph == true) {
         Serial.println("Control de EC y PH finalizado");
         lcd.clear();
@@ -324,7 +322,7 @@ void setup()
   readModule.verifica_ph();
   //=================================================================
   #if CONTROL
-  controlModule.setpoint_ph = 5.8;
+  controlModule.setpoint_ph = 6.0;
   controlModule.setpoint_ec = 1000;
   controlModule.state_ec = false;
   #endif
@@ -379,7 +377,7 @@ void step1(){
 }
 
 void step2(){
-  
+    calibrate();
     temp = readModule.receive_and_print_reading_Temp();   
     ec = readModule.receive_and_print_reading_EC();
 

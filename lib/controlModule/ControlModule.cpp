@@ -33,28 +33,28 @@ void ControlModule::control_ec() {
             Serial.println(setpoint_ec);
             peristalticsModule.acciones("bionovaA", true);
             peristalticsModule.acciones("bionovaB", true);
-            delay(2000); //tiempo de espera para 2.5 litros con agitador de 3w (4000) ec 800
+            delay(8000); //tiempo de espera para 2.5 litros con agitador de 3w (4000) ec 800
             peristalticsModule.acciones("bionovaA", false);
             peristalticsModule.acciones("bionovaB", false);
             Serial.println("Bionova A y B activos");
-        }else if(ec < setpoint_ec-200 && ec!=0){
+        }else if(ec < setpoint_ec-100 && ec!=0){
             Serial.println("EC bajo");
             Serial.print("EC: ");
             Serial.println(ec);
             peristalticsModule.acciones("bionovaA",true);
             peristalticsModule.acciones("bionovaB", true);
             Serial.println("Bionova A y B activos");
-            delay(500); //tiempo de espera para 2.5 litros con agitador de 3w (500)
+            delay(3000); //tiempo de espera para 2.5 litros con agitador de 3w (500)
             peristalticsModule.acciones("bionovaA", false);
             peristalticsModule.acciones("bionovaB", false);
             Serial.println("Bionova A y B apagados");
-        }else if(ec > setpoint_ec+600 && ec!=0){
+        }else if(ec > setpoint_ec+500 && ec!=0){
             Serial.println("EC muy alto");
             Serial.println("EC: ");
             Serial.println(ec);
             ec_bad = true;
             Serial.println("Agregar agua...");
-        }else if(ec > setpoint_ec-200 && ec < setpoint_ec+ 500 && ec!=0){
+        }else if(ec > setpoint_ec-40 && ec < setpoint_ec+ 500 && ec!=0){
             Serial.println("EC estable");
             state_ec = true;
         }else if(ec==0 ){
@@ -70,11 +70,10 @@ void ControlModule::control_ph() {
             Serial.println("No se puede controlar el PH, EC muy alto");
             
         }else{
-        if (ph > setpoint_ph+0.4) {
-            Serial.println("PH alto");
+        if (ph > setpoint_ph+0.1) {
             peristalticsModule.acciones("phDown", true);
             Serial.println("Regulando pH...");
-            delay(50);
+            delay(500);
             peristalticsModule.acciones("phDown", false);
             Serial.println("phDown apagado");
         }else if (ph < setpoint_ph-0.2) {
@@ -83,7 +82,7 @@ void ControlModule::control_ph() {
             delay(25);
             //peristalticsModule.acciones("phUp", false);
             Serial.println("reiniciar solucion");
-        }else {
+        }else if(ph >= setpoint_ph-0.05 && ph <= setpoint_ph+0.05) {
             Serial.println("PH estable");
             cOn = true;
             state_ph = true;
